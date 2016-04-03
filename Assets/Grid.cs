@@ -11,11 +11,11 @@ public class Grid : Singleton<Grid> {
         Other = 1
     }
 
-    public int length = 16;
-    public int height = 24;
+    public int length = 10;
+    public int height = 18;
     
-    public float screenWidth = 8;
-    public float screenHeight = 12;
+    public float screenWidth = 5;
+    public float screenHeight = 9;
 
     public Square[,,] grids;
     
@@ -165,9 +165,11 @@ public class Grid : Singleton<Grid> {
             gameController.winGame();
         }
     }
+
     public void destroy(Type playerType, int x, int y)
     {
         int type = (int)playerType;
+        
         grids[type, x, y].setState(Square.State.Empty);
         if (y > 0)
         {
@@ -205,42 +207,63 @@ public class Grid : Singleton<Grid> {
 
     }
 
+    public Square getSquare(Type playerType, int x, int y)
+    {
+        int type = (int)playerType;
+        return grids[type, x, y];
+    }
+
+    public void setSquare(Type playerType, Square.State _state, int x, int y)
+    {
+        int type = (int)playerType;
+        grids[type, x, y].setState(_state);
+    }
+
     public void reveal(Type playerType, int x, int y)
     {
         int type = (int)playerType;
         grids[type, x, y].activate();
+        gameController.updateOther(grids[type, x, y]);
         if (y > 0)
         {
             grids[type, x, y - 1].activate();
+            gameController.updateOther(grids[type, x, y - 1]);
         }
         if (y < height - 1)
         {
             grids[type, x, y + 1].activate();
+            gameController.updateOther(grids[type, x, y + 1]);
         }
         if (x > 0)
         {
             grids[type, x - 1, y].activate();
+            gameController.updateOther(grids[type, x - 1, y]);
 
             if (y > 0)
             {
                 grids[type, x - 1, y - 1].activate();
+                gameController.updateOther(grids[type, x - 1, y - 1]);
             }
             if (y < height - 1)
             {
                 grids[type, x - 1, y + 1].activate();
+                gameController.updateOther(grids[type, x - 1, y + 1]);
             }
         }
 
         if (x < length - 1)
         {
             grids[type, x + 1, y].activate();
+            gameController.updateOther(grids[type, x + 1, y]);
             if (y > 0)
             {
                 grids[type, x + 1, y - 1].activate();
+                gameController.updateOther(grids[type, x + 1, y - 1]);
             }
             if (y < height - 1)
             {
                 grids[type, x + 1, y + 1].activate();
+                gameController.updateOther(grids[type, x + 1, y + 1]);
             }
         }
     }
@@ -309,19 +332,34 @@ public class Grid : Singleton<Grid> {
             return false;
         }
     }
-
-    //Old methods, need refactor
-    /*
-    public void deactivate(int player)
+    
+    public void deactivate(Type playerType)
     {
+        int type = (int) playerType;
         for (int i = 0; i < length; i++)
         {
             for (int j = 0; j < height; j++)
             {
-                grids[type,i, j].deactivate();
+                grids[type, i, j].deactivate();
             }
         }
     }
+
+    public void fade(Type playerType)
+    {
+        int type = (int)playerType;
+
+        for (int i = 0; i < length; i++)
+        {
+            for (int j = 0; j < height; j++)
+            {
+                grids[type, i, j].fade();
+            }
+        }
+    }
+
+    //Old methods, need refactor
+    /*
     
     public void refreshOther(int player)
     {

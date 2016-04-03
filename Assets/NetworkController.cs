@@ -24,13 +24,15 @@ public class NetworkController : PUNSingleton<NetworkController>
         if (PhotonNetwork.room.playerCount == 2)
         {
             otherPlayer = PhotonNetwork.otherPlayers[0];
+            gameController.ready();
             gameController.photonView.RPC("ready", otherPlayer);
+            Debug.Log("Broadcasted Ready");
         }
     }
     
     public void Init()
     {
-        PhotonNetwork.ConnectUsingSettings("0.1");
+        PhotonNetwork.ConnectUsingSettings("0.2.1");
     }
 
     public void RandomJoin()
@@ -78,9 +80,4 @@ public class NetworkController : PUNSingleton<NetworkController>
 	void Update () {
 	
 	}
-
-    void OnGUI()
-    {
-        GUILayout.Label(PhotonNetwork.connectionStateDetailed.ToString());
-    }
 }
