@@ -1,7 +1,10 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+[RequireComponent(typeof (PhotonView))]
 public class GameController : Singleton<GameController> {
+
+    RuntimePlatform platform = Application.platform;
 
     public enum State
     {
@@ -10,26 +13,40 @@ public class GameController : Singleton<GameController> {
         Begin,
         Ice,
         Attack,
-        Transition,
-        Next,
+        OtherIce,
+        OtherAttack,
+        Pause,
         End
     }
 
     public State state;
     public int currentPlayer;
 
-    Grid grid;
-    UIController uiController;
+    public Grid grid;
+    public PhotonView photonView;
+
+    GameUIController gameUIController;
     EventManager eventManager;
     NetworkController networkController;
 
     MainMenuManager mainMenuManager;
     NetworkMenuManager networkMenuManager;
 
+    private bool playerIce;
+    private bool playerAttack;
+    private bool otherIce;
+    private bool otherAttack;
+
+    [PunRPC]
+    public void ready()
+    {
+        startGame();
+    }
+    
     void Awake()
     {
         grid = Grid.Instance;
-        uiController = UIController.Instance;
+        gameUIController = GameUIController.Instance;
         eventManager = EventManager.Instance;
         networkController = NetworkController.Instance;
 
@@ -37,16 +54,11 @@ public class GameController : Singleton<GameController> {
         networkMenuManager = NetworkMenuManager.Instance;
 
     }
-
-    public void endGame(int player)
-    {
-        state = State.End;
-        uiController.endGame(player);
-    }
-
+    
 	// Use this for initialization
 	void Start () {
         gotoState(State.Menu);
+        PhotonNetwork.autoJoinLobby = true;
         //uiController.showStartMenu();
 	}
 
@@ -55,101 +67,77 @@ public class GameController : Singleton<GameController> {
         switch(_state)
         {
             case State.Network:
+                //Hosting, Joining a game
+                state = State.Network;
                 networkController.Init();
                 networkController.Scan();
                 networkMenuManager.enable();
                 mainMenuManager.disable();
-                state = State.Network;
                 break;
             case State.Menu:
+                //Main Menu
+                state = State.Menu;
                 mainMenuManager.enable();
                 networkMenuManager.disable();
-                state = State.Menu;
                 break;
             case State.Ice:
+                //Icing your own area
                 state = State.Ice;
+                grid.showGrid(Grid.Type.Player);
                 break;
             case State.Begin:
+                //Tutorial?
                 state = State.Begin;
                 break;
-            case State.Transition:
-                state = State.Transition;
+            case State.OtherIce:
+                //Waiting for other player to ice
+                state = State.OtherIce;
                 break;
-            case State.Next:
-                state = State.Next;
+            case State.OtherAttack:
+                //Waiting for other player to attack;
+                state = State.OtherAttack;
+                break;
+            case State.Pause:
+                //Game paused
+                state = State.Pause;
                 break;
             case State.End:
+                //Game has ended
                 state = State.End;
                 break;
             case State.Attack:
+                //Attacking other player
                 state = State.Attack;
+                grid.showGrid(Grid.Type.Other);
                 break;
         }
-    }
-
-    void startGame()
-    {
-        grid.InitializeGrid();
-        currentPlayer = 0;
-        startRound();
     }
 
 	// Update is called once per frame
 	void Update () {
         switch (state)
         {
-            case State.Attack:
-                if (Input.GetMouseButtonDown(0))
-                {
-                    RaycastHit hit;
-                    Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-                    if (Physics.Raycast(ray, out hit))
-                    {
-                        Square square = hit.collider.gameObject.GetComponent<Square>();
-                        if (square.type.Equals(Square.Type.Other))
-                        {
-                            square.reveal(currentPlayer);
-                            int otherPlayer = (currentPlayer + 1) % 2;
-                            square.hitEmpty(otherPlayer);
-                            eventManager.addEvent(() => square.reveal(currentPlayer), 1, true);
-                            if (!state.Equals(State.End))
-                            {
-                                state = State.Next;
-                            }
-                        }
-                    }
-                }
-                break;
             case State.Ice:
-                if (Input.GetMouseButtonDown(0))
-                {
-                    RaycastHit hit;
-                    Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-                    if (Physics.Raycast(ray, out hit))
-                    {
-                        Square square = hit.collider.gameObject.GetComponent<Square>();
-                        if (square.type.Equals(Square.Type.Player))
-                        {
-                            square.hitIce(currentPlayer);
-                            if (!state.Equals(State.End))
-                            {
-                                state = State.Attack;
-                            }
-                        }
-                    }
-                }
+                detectHit();
+                break;
+            case State.Attack:
+                detectHit();
                 break;
             case State.Menu:
-                if (Input.GetKeyDown(KeyCode.Return))
+                break;
+            case State.Pause:
+                break;
+            case State.OtherIce:
+                if (otherIce && playerIce)
                 {
-                    uiController.hideUI();
-                    startGame();
+                    gotoState(State.Attack);
                 }
                 break;
-            case State.Next:
-                startNextRound();
-                break;
-            case State.Transition:
+            case State.OtherAttack:
+                if (otherAttack && playerAttack)
+                {
+                    gotoState(State.Ice);
+                }
                 break;
             case State.End:
                 break;
@@ -157,39 +145,90 @@ public class GameController : Singleton<GameController> {
         }
 	}
 
+    void detectHit()
+    {
+        if (platform == RuntimePlatform.Android || platform == RuntimePlatform.IPhonePlayer)
+        {
+            if (Input.touchCount > 0)
+            {
+                if (Input.GetTouch(0).phase == TouchPhase.Began)
+                {
+                    hit(Input.GetTouch(0).position);
+                }
+            }
+        }
+        else if (platform == RuntimePlatform.WindowsEditor)
+        {
+            if (Input.GetMouseButtonDown(0))
+            {
+                hit(Input.mousePosition);
+            }
+        }
+    }
+
+    void hit(Vector3 position)
+    {
+        RaycastHit hit;
+        Ray ray = Camera.main.ScreenPointToRay(position);
+        if (Physics.Raycast(ray, out hit))
+        {
+            Square square = hit.collider.gameObject.GetComponent<Square>();
+            if (state.Equals(State.Attack))
+            {
+                playerAttack = true;
+                grid.reveal(Grid.Type.Other, square.xIndex, square.yIndex);
+                eventManager.addEvent(() => grid.destroy(Grid.Type.Other, square.xIndex, square.yIndex), 1, true);
+                eventManager.addEvent(() => photonView.RPC("getAttacked", networkController.otherPlayer, square.xIndex, square.yIndex), 1, true);
+                eventManager.addEvent(() => gotoState(State.OtherAttack), 2, true);
+            }
+            else if (state.Equals(State.Ice))
+            {
+                playerIce = true;
+                grid.ice(Grid.Type.Player, square.xIndex, square.yIndex);
+                photonView.RPC("ice", networkController.otherPlayer, square.xIndex, square.yIndex);
+                eventManager.addEvent(() => gotoState(State.OtherIce), 1, true);
+            }
+        }
+    }
+
+    [PunRPC]
+    public void ice(int x, int y)
+    {
+        otherIce = true;
+        grid.ice(Grid.Type.Other, x, y);
+    }
+
+    [PunRPC]
+    public void getAttacked(int x, int y)
+    {
+        otherAttack = true;
+        grid.destroy(Grid.Type.Player, x, y);
+    }
+
+
+    public void startGame()
+    {
+        grid.InitializeGrid();
+        startRound();
+    }
+
+    public void winGame()
+    {
+
+    }
+
+    public void loseGame()
+    {
+
+    }
+
     void startRound()
     {
-        state = State.Transition;
-        grid.playerGridsObjects[currentPlayer].SetActive(true);
-        int otherPlayer = (currentPlayer + 1) % 2;
-        grid.playerGridsObjects[otherPlayer].SetActive(false);
-        grid.deactivate(otherPlayer);
-        state = State.Ice;
-        uiController.countdown(currentPlayer + 1);
-
-    }
-
-    void startNextRound()
-    {
-        state = State.Transition;
-        eventManager.addEvent(nextRound, 4, true);
-        int nextPlayer = (currentPlayer + 1) % 2;
-        eventManager.addEvent(() => uiController.countdown(nextPlayer + 1), 2, true);
-    }
-
-    void refreshGrid()
-    {
-        grid.refreshOther(currentPlayer);
-    }
-
-    void nextRound()
-    {
-        grid.deactivate(currentPlayer);
-        grid.playerGridsObjects[currentPlayer].SetActive(false);
-        int otherPlayer = (currentPlayer + 1) % 2;
-        grid.playerGridsObjects[otherPlayer].SetActive(true);
-        currentPlayer = otherPlayer;
-        state = State.Ice;
+        playerIce = false;
+        playerAttack = false;
+        otherIce = false;
+        otherAttack = false;
+        gotoState(State.Ice);
     }
 
 }
