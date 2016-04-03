@@ -16,19 +16,25 @@ public class NetworkMenuManager : Singleton<NetworkMenuManager> {
         canvas.gameObject.SetActive(false);
     }
 
+    public void randomJoin()
+    {
+        networkController.RandomJoin();
+    }
+
     public void refresh()
     {
+        scan();
     }
 
     public void scan()
     {
         networkController.Scan();
-        foreach (RoomInfo game in PhotonNetwork.GetRoomList())
+        foreach (RoomInfo game in networkController.rooms)
         {
             Debug.Log(game.name + " " + game.playerCount + "/" + game.maxPlayers);
         }
     }
-
+    
     public void join(int i)
     {
 
