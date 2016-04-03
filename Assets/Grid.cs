@@ -3,38 +3,50 @@ using System.Collections;
 
 public class Grid : Singleton<Grid> {
 
+    GameController gameController;
+
+    public enum Type
+    {
+        Player = 0,
+        Other = 1
+    }
+
     public int length = 16;
     public int height = 24;
-
-    public float playerX = -6f;
-    public float playerY = 0f;
-
-    public float otherX = 6f;
-    public float otherY = 0f;
-
+    
     public float screenWidth = 8;
     public float screenHeight = 12;
 
-    public Square[,,] playerGrid;
-    public Square[,,] otherGrid;
-
+    public Square[,,] grids;
+    
     public GameObject squarePrefab;
 
-    private bool[,] traverseplayerGrid;
+    private bool[,] traversePlayerGrid;
 
     public GameObject[] playerGridsObjects;
+
+    void Awake()
+    {
+        gameController = GameController.Instance;
+    }
 
 	// Use this for initialization
 	void Start () {
        
 	}
 
+    // Update is called once per frame
+    void Update()
+    {
+
+    }
+    
     public void InitializeGrid()
     {
-        playerGrid = new Square[2, length, height];
-        otherGrid = new Square[2, length, height];
+        grids = new Square[2, length, height];
         playerGridsObjects = new GameObject[2];
         PopulateSquares();
+        initializeSquares();
     }
 
     void PopulateSquares()
@@ -42,215 +54,212 @@ public class Grid : Singleton<Grid> {
         squarePrefab = Resources.Load("Square") as GameObject;
         float lStep = 1.0f * screenWidth / length;
         float hStep = 1.0f * screenHeight / height;
-        playerGridsObjects[0] = new GameObject("Player 1 Grid");
-        playerGridsObjects[1] = new GameObject("Player 2 Grid");
+        playerGridsObjects[0] = new GameObject("Player Grid");
+        playerGridsObjects[1] = new GameObject("Other Grid");
         for (int i = 0; i < length; i++)
         {
             for (int j = 0; j < height; j++)
             {
-                float xPos = i * lStep - screenWidth / 2 + lStep / 2 + playerX;
-                float yPos = j * hStep - screenHeight / 2 + hStep / 2 + playerY;
-                createSquare(i, j, xPos, yPos, Square.Type.Player, 0);
-                createSquare(i, j, xPos, yPos, Square.Type.Player, 1);
-            }
-        }
-        for (int i = 0; i < length; i++)
-        {
-            for (int j = 0; j < height; j++)
-            {
-                float xPos = i * lStep - screenWidth / 2 + lStep / 2 + otherX;
-                float yPos = j * hStep - screenHeight / 2 + hStep / 2 + otherY;
-                createSquare(i, j, xPos, yPos, Square.Type.Other, 0);
-                createSquare(i, j, xPos, yPos, Square.Type.Other, 1);
+                float xPos = i * lStep - screenWidth / 2 + lStep / 2;
+                float yPos = j * hStep - screenHeight / 2 + hStep / 2;
+                createSquare(i, j, xPos, yPos, Type.Player);
+                createSquare(i, j, xPos, yPos, Type.Other);
             }
         }
     }
 
-    void createSquare(int xIndex, int yIndex, float x, float y, Square.Type type, int player)
+    void createSquare(int xIndex, int yIndex, float x, float y, Type type)
     {
         GameObject sObj = Object.Instantiate(squarePrefab, new Vector3(x, y, 0), Quaternion.identity) as GameObject;
-        sObj.transform.parent = playerGridsObjects[player].transform;
+        sObj.transform.parent = playerGridsObjects[(int)type].transform;
         sObj.transform.localScale = new Vector3(1.0f/(length/screenWidth), 1.0f/(height/screenHeight), 1);
         Square square = sObj.GetComponent<Square>();
         square.xIndex = xIndex;
         square.yIndex = yIndex;
-        square.init(type);
-        if (type.Equals(Square.Type.Player))
-        {
-            playerGrid[player, xIndex, yIndex] = square;
-        }
-        else
-        {
-            otherGrid[player, xIndex, yIndex] = square;
-        }
+        grids[(int) type, xIndex, yIndex] = square; 
     }
 
-    public void deactivate(int player)
+    void initializeSquares()
     {
+
         for (int i = 0; i < length; i++)
         {
             for (int j = 0; j < height; j++)
             {
-                otherGrid[player, i, j].deactivate();
+                grids[0, i, j].setState(Square.State.Empty);
+                grids[1, i, j].setState(Square.State.EmptyInactive);
             }
         }
     }
 
-    public void hitEmpty(int player, int x, int y)
+    public void showGrid(Type type)
     {
-        playerGrid[player, x, y].setEmpty();
+        switch(type)
+        {
+            case Type.Player:
+                hide(playerGridsObjects[1]);
+                show(playerGridsObjects[0]);
+                break;
+            case Type.Other:
+                hide(playerGridsObjects[0]);
+                show(playerGridsObjects[1]);
+                break;
+        }
+    }
+
+    public void hide(GameObject grid)
+    {
+        grid.transform.position = new Vector3(0, 0, 1);
+        grid.transform.localScale = new Vector3(0, 0, 0);
+    }
+
+    public void show(GameObject grid)
+    {
+        grid.transform.position = new Vector3(0, 0, -1);
+        grid.transform.localScale = new Vector3(1, 1, 1);
+    }
+
+    public void ice(Type playerType, int x, int y)
+    {
+        int type = (int)playerType;
+        grids[type, x, y].setState(Square.State.Ice);
         if (y > 0)
         {
-            playerGrid[player, x, y - 1].setEmpty();
+            grids[type, x, y - 1].setState(Square.State.Ice);
         }
         if (y < height - 1)
         {
-            playerGrid[player, x, y + 1].setEmpty();
+            grids[type, x, y + 1].setState(Square.State.Ice);
         }
         if (x > 0)
         {
-            playerGrid[player, x - 1, y].setEmpty();
+            grids[type, x - 1, y].setState(Square.State.Ice);
             if (y > 0)
             {
-                playerGrid[player, x - 1, y - 1].setEmpty();
+                grids[type, x - 1, y - 1].setState(Square.State.Ice);
             }
             if (y < height - 1)
             {
-                playerGrid[player, x - 1, y + 1].setEmpty();
+                grids[type, x - 1, y + 1].setState(Square.State.Ice);
             }
         }
 
         if (x < length - 1)
         {
-            playerGrid[player, x + 1, y].setEmpty();
+            grids[type, x + 1, y].setState(Square.State.Ice);
             if (y > 0)
             {
-                playerGrid[player, x + 1, y - 1].setEmpty();
+                grids[type, x + 1, y - 1].setState(Square.State.Ice);
             }
             if (y < height - 1)
             {
-                playerGrid[player, x + 1, y + 1].setEmpty();
+                grids[type, x + 1, y + 1].setState(Square.State.Ice);
             }
         }
 
-    }
-
-    public void hitIce(int player, int x, int y)
-    {
-        playerGrid[player, x, y].setIce();
-        if (y > 0)
-        {
-            playerGrid[player, x, y - 1].setIce();
-        }
-        if (y < height - 1)
-        {
-            playerGrid[player, x, y + 1].setIce();
-        }
-        if (x > 0)
-        {
-            playerGrid[player, x - 1, y].setIce();
-            if (y > 0)
-            {
-                playerGrid[player, x - 1, y - 1].setIce();
-            }
-            if (y < height - 1)
-            {
-                playerGrid[player, x - 1, y + 1].setIce();
-            }
-        }
-        
-        if (x < length - 1)
-        {
-            playerGrid[player, x + 1, y].setIce();
-            if (y > 0)
-            {
-                playerGrid[player, x + 1, y - 1].setIce();
-            }
-            if (y < height - 1)
-            {
-                playerGrid[player, x + 1, y + 1].setIce();
-            }
-        }
-
-        bool found = searchPath(player);
+        bool found = searchPath();
         Debug.Log(found);
 
         if (found)
         {
-            GameController.Instance.endGame(player);
+            gameController.winGame();
         }
     }
-
-    public void refreshOther(int player)
+    public void destroy(Type playerType, int x, int y)
     {
-        int other = (player + 1) % 2;
-        for (int i = 0; i < length; i++)
-        {
-            for (int j = 0; j < height; j++)
-            {
-                if (otherGrid[player, i, j].active)
-                {
-                    otherGrid[player, i, j].setState(playerGrid[other, i, j].state);
-                }
-            }
-        }
-    }
-
-    public void reveal(int player, int x, int y)
-    {
-        int other = (player + 1) % 2;
-        otherGrid[player, x, y].setState(playerGrid[other, x, y].state);
+        int type = (int)playerType;
+        grids[type, x, y].setState(Square.State.Empty);
         if (y > 0)
         {
-            otherGrid[player, x, y - 1].setState(playerGrid[other, x, y - 1].state);
+            grids[type, x, y - 1].setState(Square.State.Empty);
         }
         if (y < height - 1)
         {
-            otherGrid[player, x, y + 1].setState(playerGrid[other, x, y + 1].state);
+            grids[type, x, y + 1].setState(Square.State.Empty);
         }
         if (x > 0)
         {
-            otherGrid[player, x - 1, y].setState(playerGrid[other, x - 1, y].state);
-
+            grids[type, x - 1, y].setState(Square.State.Empty);
             if (y > 0)
             {
-                otherGrid[player, x - 1, y - 1].setState(playerGrid[other, x - 1, y - 1].state);
+                grids[type, x - 1, y - 1].setState(Square.State.Empty);
             }
             if (y < height - 1)
             {
-                otherGrid[player, x - 1, y + 1].setState(playerGrid[other, x - 1, y + 1].state);
+                grids[type, x - 1, y + 1].setState(Square.State.Empty);
             }
         }
 
         if (x < length - 1)
         {
-            otherGrid[player, x + 1, y].setState(playerGrid[other, x + 1, y].state);
+            grids[type, x + 1, y].setState(Square.State.Empty);
             if (y > 0)
             {
-                otherGrid[player, x + 1, y - 1].setState(playerGrid[other, x + 1, y - 1].state);
+                grids[type, x + 1, y - 1].setState(Square.State.Empty);
             }
             if (y < height - 1)
             {
-                otherGrid[player, x + 1, y + 1].setState(playerGrid[other, x + 1, y + 1].state);
+                grids[type, x + 1, y + 1].setState(Square.State.Empty);
+            }
+        }
+
+    }
+
+    public void reveal(Type playerType, int x, int y)
+    {
+        int type = (int)playerType;
+        grids[type, x, y].activate();
+        if (y > 0)
+        {
+            grids[type, x, y - 1].activate();
+        }
+        if (y < height - 1)
+        {
+            grids[type, x, y + 1].activate();
+        }
+        if (x > 0)
+        {
+            grids[type, x - 1, y].activate();
+
+            if (y > 0)
+            {
+                grids[type, x - 1, y - 1].activate();
+            }
+            if (y < height - 1)
+            {
+                grids[type, x - 1, y + 1].activate();
+            }
+        }
+
+        if (x < length - 1)
+        {
+            grids[type, x + 1, y].activate();
+            if (y > 0)
+            {
+                grids[type, x + 1, y - 1].activate();
+            }
+            if (y < height - 1)
+            {
+                grids[type, x + 1, y + 1].activate();
             }
         }
     }
-
-    bool searchPath(int player)
+    
+    bool searchPath()
     {
         for (int i = 0; i < length; i++)
         {
-            if (playerGrid[player, i, 0].iced)
+            if (grids[0, i, 0].iced)
             {
-                traverseplayerGrid = new bool[length, height];
+                traversePlayerGrid = new bool[length, height];
                 for (int j = 0; j < length; j++)
                 {
                     for (int k = 0; k < height; k++)
                     {
-                        traverseplayerGrid[j, k] = false;
+                        traversePlayerGrid[j, k] = false;
                     }
                 }
-                if (DFS(player, i, 0))
+                if (DFS(i, 0))
                 {
                     return true;
                 }
@@ -259,13 +268,13 @@ public class Grid : Singleton<Grid> {
         return false;
     }
 
-    bool DFS(int player, int x, int y)
+    bool DFS(int x, int y)
     {
         if (x < 0 || x >= length || y < 0 || y >= height)
         {
             return false;
         }
-        if (!playerGrid[player, x, y].iced)
+        if (!grids[0, x, y].iced)
         {
             return false;
         }
@@ -273,39 +282,62 @@ public class Grid : Singleton<Grid> {
         {
             return true;
         }
-        if (!traverseplayerGrid[x, y])
+        if (!traversePlayerGrid[x, y])
         {
-            traverseplayerGrid[x, y] = true;
+            traversePlayerGrid[x, y] = true;
             bool result = false;
-            if (DFS(player, x - 1, y))
+            if (DFS(x - 1, y))
             {
                 result = true;
             }
-            if (DFS(player, x + 1, y))
+            if (DFS(x + 1, y))
             {
                 result = true;
             }
-            if (DFS(player, x, y - 1))
+            if (DFS(x, y - 1))
             {
                 result = true;
             }
-            if (DFS(player, x, y + 1))
+            if (DFS(x, y + 1))
             {
                 result = true;
             }
             return result;
-
         }
         else
         {
             return false;
         }
-
     }
 
-    // Update is called once per frame
-    void Update()
+    //Old methods, need refactor
+    /*
+    public void deactivate(int player)
     {
-	
-	}
+        for (int i = 0; i < length; i++)
+        {
+            for (int j = 0; j < height; j++)
+            {
+                grids[type,i, j].deactivate();
+            }
+        }
+    }
+    
+    public void refreshOther(int player)
+    {
+        int other = (player + 1) % 2;
+        for (int i = 0; i < length; i++)
+        {
+            for (int j = 0; j < height; j++)
+            {
+                if (grids[type,player, i, j].active)
+                {
+                    grids[type,player, i, j].setState(grids[type,other, i, j].state);
+                }
+            }
+        }
+    }
+
+
+    */
 }
