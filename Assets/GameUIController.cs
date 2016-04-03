@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class UIController : Singleton<UIController> {
+public class GameUIController : Singleton<GameUIController> {
 
     public TextMesh centerText;
     public TextMesh subText;
