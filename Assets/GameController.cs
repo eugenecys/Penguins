@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-[RequireComponent(typeof (PhotonView))]
+[RequireComponent(typeof(PhotonView))]
 public class GameController : Singleton<GameController> {
 
     RuntimePlatform platform = Application.platform;
@@ -16,7 +16,8 @@ public class GameController : Singleton<GameController> {
         OtherIce,
         OtherAttack,
         Pause,
-        End
+        End,
+        Wait
     }
 
     public State state;
@@ -36,13 +37,21 @@ public class GameController : Singleton<GameController> {
     private bool playerAttack;
     private bool otherIce;
     private bool otherAttack;
+    private bool playerReady;
+    private bool otherReady;
+    
+    public void readyToStart()
+    {
+        playerReady = true;
+        gotoState(State.Begin);
+    }
 
     [PunRPC]
     public void ready()
     {
-        startGame();
+        otherReady = true;
     }
-    
+
     void Awake()
     {
         grid = Grid.Instance;
@@ -54,17 +63,17 @@ public class GameController : Singleton<GameController> {
         networkMenuManager = NetworkMenuManager.Instance;
 
     }
-    
-	// Use this for initialization
-	void Start () {
+
+    // Use this for initialization
+    void Start() {
         gotoState(State.Menu);
         PhotonNetwork.autoJoinLobby = true;
         //uiController.showStartMenu();
-	}
+    }
 
     public void gotoState(State _state)
     {
-        switch(_state)
+        switch (_state)
         {
             case State.Network:
                 //Hosting, Joining a game
@@ -88,13 +97,19 @@ public class GameController : Singleton<GameController> {
             case State.Begin:
                 //Tutorial?
                 state = State.Begin;
+                initGame();
+                networkMenuManager.disable();
+                mainMenuManager.disable();
+                gotoState(State.Wait);
                 break;
             case State.OtherIce:
                 //Waiting for other player to ice
+                playerIce = true;
                 state = State.OtherIce;
                 break;
             case State.OtherAttack:
                 //Waiting for other player to attack;
+                playerAttack = true;
                 state = State.OtherAttack;
                 break;
             case State.Pause:
@@ -110,11 +125,17 @@ public class GameController : Singleton<GameController> {
                 state = State.Attack;
                 grid.showGrid(Grid.Type.Other);
                 break;
+            case State.Wait:
+                //Waiting for other player to be ready
+                state = State.Wait;
+                playerReady = true;
+                photonView.RPC("ready", networkController.otherPlayer);
+                break;
         }
     }
 
-	// Update is called once per frame
-	void Update () {
+    // Update is called once per frame
+    void Update() {
         switch (state)
         {
             case State.Ice:
@@ -124,6 +145,9 @@ public class GameController : Singleton<GameController> {
                 detectHit();
                 break;
             case State.Menu:
+                break;
+            case State.Begin:
+
                 break;
             case State.Pause:
                 break;
@@ -136,14 +160,19 @@ public class GameController : Singleton<GameController> {
             case State.OtherAttack:
                 if (otherAttack && playerAttack)
                 {
-                    gotoState(State.Ice);
+                    gotoState(State.Wait);
                 }
                 break;
             case State.End:
                 break;
-
+            case State.Wait:
+                if (otherReady && playerReady)
+                {
+                    beginRound();
+                }
+                break;
         }
-	}
+    }
 
     void detectHit()
     {
@@ -206,10 +235,9 @@ public class GameController : Singleton<GameController> {
     }
 
 
-    public void startGame()
+    public void initGame()
     {
         grid.InitializeGrid();
-        startRound();
     }
 
     public void winGame()
@@ -222,7 +250,7 @@ public class GameController : Singleton<GameController> {
 
     }
 
-    void startRound()
+    void beginRound()
     {
         playerIce = false;
         playerAttack = false;

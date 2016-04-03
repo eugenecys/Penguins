@@ -20,16 +20,11 @@ public class NetworkController : PUNSingleton<NetworkController>
     public override void OnJoinedRoom()
     {
         Debug.Log("Joined Room: " + PhotonNetwork.room.name);
+        gameController.readyToStart();
         if (PhotonNetwork.room.playerCount == 2)
         {
-            PhotonPlayer[] players = new PhotonPlayer[2];
-            players[0] = PhotonNetwork.player;
-            players[1] = PhotonNetwork.otherPlayers[0];
-            otherPlayer = players[1];
-
-            int startPlayer = Random.Range(0, 2);
-            gameController.photonView.RPC("ready", players[startPlayer], true);
-            gameController.photonView.RPC("ready", players[(startPlayer + 1) % 2], false);
+            otherPlayer = PhotonNetwork.otherPlayers[0];
+            gameController.photonView.RPC("ready", otherPlayer);
         }
     }
     
@@ -59,6 +54,14 @@ public class NetworkController : PUNSingleton<NetworkController>
         isHost = true;
         PhotonNetwork.CreateRoom("Hello");
         Debug.Log("Created Room");
+    }
+
+    public void retrieveOtherPlayer()
+    {
+        if (PhotonNetwork.room.playerCount > 1)
+        {
+            otherPlayer = PhotonNetwork.otherPlayers[0];
+        }
     }
 
     void Awake()
