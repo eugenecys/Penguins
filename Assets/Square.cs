@@ -13,12 +13,6 @@ public class Square : MonoBehaviour {
         EmptyInactive
     }
 
-    public enum Type
-    {
-        Player,
-        Other
-    }
-
     public bool iced
     {
         get
@@ -35,13 +29,12 @@ public class Square : MonoBehaviour {
         }
     }
 
-    public GameObject ice;
-    public GameObject dirt;
-    public GameObject iceInactive;
-    public GameObject dirtInactive;
+    public GameObject iceSprite;
+    public GameObject dirtSprite;
+    public GameObject iceInactiveSprite;
+    public GameObject dirtInactiveSprite;
 
     public State state;
-    public Type type;
 
     public int xIndex;
     public int yIndex;
@@ -51,46 +44,28 @@ public class Square : MonoBehaviour {
     {
         grid = Grid.Instance;
 	}
-
-    public void hit(int player)
-    {
-        if (type.Equals(Type.Player))
-        {
-            hitIce(player);
-        }
-        else
-        {
-            reveal(player);
-        }
-    }
-
-    public void init(Type _type)
-    {
-        type = _type;
-        if (type.Equals(Type.Player))
-        {
-            setEmpty();
-        }
-        else
-        {
-            setEmptyInactive();
-        }
-    }
-
-    public void reveal(int player)
-    {
-        grid.reveal(player, xIndex, yIndex);
-    }
-
+    
     public void deactivate()
     {
         if (state.Equals(State.Ice) || state.Equals(State.IceInactive))
         {
-            setIceInactive();
+            setState(State.IceInactive);
         }
         else
         {
-            setEmptyInactive();
+            setState(State.EmptyInactive);
+        }
+    }
+
+    public void activate()
+    {
+        if (state.Equals(State.Ice) || state.Equals(State.IceInactive))
+        {
+            setState(State.Ice);
+        }
+        else
+        {
+            setState(State.Empty);
         }
     }
 
@@ -99,78 +74,36 @@ public class Square : MonoBehaviour {
         switch (_state)
         {
             case State.Empty:
-                setEmpty();
+                state = State.Empty;
+                iceSprite.SetActive(false);
+                dirtSprite.SetActive(true);
+                iceInactiveSprite.SetActive(false);
+                dirtInactiveSprite.SetActive(false);
                 break;
             case State.Ice:
-                setIce();
+                state = State.Ice;
+                iceSprite.SetActive(true);
+                dirtSprite.SetActive(false);
+                iceInactiveSprite.SetActive(false);
+                dirtInactiveSprite.SetActive(false);
                 break;
             case State.EmptyInactive:
-                setEmptyInactive();
+                state = State.EmptyInactive;
+                iceSprite.SetActive(false);
+                dirtSprite.SetActive(false);
+                iceInactiveSprite.SetActive(false);
+                dirtInactiveSprite.SetActive(true);
                 break;
             case State.IceInactive:
-                setIceInactive();
+                state = State.IceInactive;
+                iceSprite.SetActive(false);
+                dirtSprite.SetActive(false);
+                iceInactiveSprite.SetActive(true);
+                dirtInactiveSprite.SetActive(false);
                 break;
         }
     }
-
-    public void activate()
-    {
-        if (state.Equals(State.Ice) || state.Equals(State.IceInactive))
-        {
-            setIce();
-        }
-        else
-        {
-            setEmpty();
-        }
-    }
-
-    public void hitEmpty(int player)
-    {
-        grid.hitEmpty(player, xIndex, yIndex);
-    }
-
-    public void hitIce(int player)
-    {
-        grid.hitIce(player, xIndex, yIndex);
-    }
-
-    public void setEmptyInactive()
-    {
-        state = State.EmptyInactive;
-        ice.SetActive(false);
-        dirt.SetActive(false);
-        iceInactive.SetActive(false);
-        dirtInactive.SetActive(true);
-    }
-
-    public void setIceInactive()
-    {
-        state = State.IceInactive;
-        ice.SetActive(false);
-        dirt.SetActive(false);
-        iceInactive.SetActive(true);
-        dirtInactive.SetActive(false);
-    }
-
-    public void setEmpty()
-    {
-        state = State.Empty;
-        ice.SetActive(false);
-        dirt.SetActive(true);
-        iceInactive.SetActive(false);
-        dirtInactive.SetActive(false);
-    }
-
-    public void setIce()
-    {
-        state = State.Ice;
-        ice.SetActive(true);
-        dirt.SetActive(false);
-        iceInactive.SetActive(false);
-        dirtInactive.SetActive(false);
-    }
-
+    
 	// Update is called once per frame
 	void Update () {
 	
