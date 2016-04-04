@@ -262,7 +262,7 @@ public class Grid : Singleton<Grid> {
         }
     }
 
-    public void destroy(Type playerType, int x, int y)
+    public void attack(Type playerType, int x, int y)
     {
         int type = (int)playerType;
         
@@ -570,6 +570,21 @@ public class Grid : Singleton<Grid> {
             }
         }
     }
+    
+    public void Destroy()
+    {
+
+        for (int i = 0; i < length; i++)
+        {
+            for (int j = 0; j < height; j++)
+            {
+                Destroy(grids[0, i, j].gameObject);
+                Destroy(grids[1, i, j].gameObject);
+                
+            }
+        }
+    }
+
 
     //Old methods, need refactor
     /*
