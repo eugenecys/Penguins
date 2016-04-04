@@ -4,6 +4,7 @@ using System.Collections;
 public class NetworkController : PUNSingleton<NetworkController>
 {
     GameController gameController;
+    NetworkMenuManager networkMenuManager;
 
     bool connected;
     bool isHost;
@@ -14,11 +15,13 @@ public class NetworkController : PUNSingleton<NetworkController>
 
     public override void OnJoinedLobby()
     {
+        networkMenuManager.setState(NetworkMenuManager.State.Active);
         Debug.Log("Joined Lobby");
     }
 
     public override void OnJoinedRoom()
     {
+        networkMenuManager.setState(NetworkMenuManager.State.Inactive);
         Debug.Log("Joined Room: " + PhotonNetwork.room.name);
         gameController.readyToStart();
         if (PhotonNetwork.room.playerCount == 2)
@@ -32,6 +35,7 @@ public class NetworkController : PUNSingleton<NetworkController>
     
     public void Init()
     {
+        networkMenuManager.setState(NetworkMenuManager.State.Connecting);
         PhotonNetwork.ConnectUsingSettings("0.2.1");
     }
 
@@ -69,6 +73,7 @@ public class NetworkController : PUNSingleton<NetworkController>
     void Awake()
     {
         gameController = GameController.Instance;
+        networkMenuManager = NetworkMenuManager.Instance;
     }
 
 	// Use this for initialization

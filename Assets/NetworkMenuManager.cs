@@ -5,17 +5,37 @@ public class NetworkMenuManager : Singleton<NetworkMenuManager> {
 
     NetworkController networkController;
     public Canvas canvas;
+    public GameObject connecting;
 
-    public void enable()
+    public enum State
     {
-        canvas.gameObject.SetActive(true);
+        Connecting,
+        Active,
+        Inactive
     }
 
-    public void disable()
+    public State state;
+    
+    public void setState(State _state)
     {
-        canvas.gameObject.SetActive(false);
+        state = _state;
+        switch(state)
+        {
+            case State.Connecting:
+                connecting.SetActive(true);
+                canvas.gameObject.SetActive(false);
+                break;
+            case State.Active:
+                canvas.gameObject.SetActive(true);
+                connecting.SetActive(false);
+                break;
+            case State.Inactive:
+                canvas.gameObject.SetActive(false);
+                connecting.SetActive(false);
+                break;
+        }
     }
-
+    
     public void randomJoin()
     {
         networkController.RandomJoin();

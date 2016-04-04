@@ -33,13 +33,15 @@ public class GameController : Singleton<GameController> {
     MainMenuManager mainMenuManager;
     NetworkMenuManager networkMenuManager;
 
-    public bool playerIce;
-    public bool playerAttack;
-    public bool otherIce;
-    public bool otherAttack;
-    public bool playerReady;
-    public bool otherReady;
-    
+    private bool playerIce;
+    private bool playerAttack;
+    private bool otherIce;
+    private bool otherAttack;
+    private bool playerReady;
+    private bool otherReady;
+
+    public GameObject waitScreen;
+
     public void readyToStart()
     {
         gotoState(State.Begin);
@@ -50,7 +52,7 @@ public class GameController : Singleton<GameController> {
     {
         otherReady = true;
     }
-
+    
     void Awake()
     {
         grid = Grid.Instance;
@@ -61,6 +63,7 @@ public class GameController : Singleton<GameController> {
         mainMenuManager = MainMenuManager.Instance;
         networkMenuManager = NetworkMenuManager.Instance;
 
+        waitScreen.SetActive(false);
     }
 
     // Use this for initialization
@@ -85,14 +88,12 @@ public class GameController : Singleton<GameController> {
                 state = State.Network;
                 networkController.Init();
                 networkController.Scan();
-                networkMenuManager.enable();
                 mainMenuManager.disable();
                 break;
             case State.Menu:
                 //Main Menu
                 state = State.Menu;
                 mainMenuManager.enable();
-                networkMenuManager.disable();
                 break;
             case State.Ice:
                 //Icing your own area
@@ -102,18 +103,20 @@ public class GameController : Singleton<GameController> {
             case State.Begin:
                 //Tutorial?
                 state = State.Begin;
+                waitScreen.SetActive(true);
                 initGame();
-                networkMenuManager.disable();
                 mainMenuManager.disable();
                 playerReady = true;
                 break;
             case State.OtherIce:
                 //Waiting for other player to ice
+                waitScreen.SetActive(true);
                 playerIce = true;
                 state = State.OtherIce;
                 break;
             case State.OtherAttack:
                 //Waiting for other player to attack;
+                waitScreen.SetActive(true);
                 playerAttack = true;
                 state = State.OtherAttack;
                 break;
@@ -133,6 +136,7 @@ public class GameController : Singleton<GameController> {
             case State.Wait:
                 //Waiting for other player to be ready
                 state = State.Wait;
+                waitScreen.SetActive(true);
                 playerReady = true;
                 photonView.RPC("ready", networkController.otherPlayer);
                 break;
@@ -157,6 +161,7 @@ public class GameController : Singleton<GameController> {
                     networkController.retrieveOtherPlayer();
                     otherReady = false;
                     playerReady = false;
+                    waitScreen.SetActive(false);
                     beginRound();
                 }
                 break;
@@ -165,6 +170,7 @@ public class GameController : Singleton<GameController> {
             case State.OtherIce:
                 if (otherIce && playerIce)
                 {
+                    waitScreen.SetActive(false);
                     gotoState(State.Attack);
                     otherIce = false;
                     playerIce = false;
@@ -173,6 +179,7 @@ public class GameController : Singleton<GameController> {
             case State.OtherAttack:
                 if (otherAttack && playerAttack)
                 {
+                    waitScreen.SetActive(false);
                     gotoState(State.Wait);
                     otherAttack = false;
                     playerAttack = false;
@@ -183,6 +190,7 @@ public class GameController : Singleton<GameController> {
             case State.Wait:
                 if (otherReady && playerReady)
                 {
+                    waitScreen.SetActive(false);
                     beginRound();
                     otherReady = false;
                     playerReady = false;
@@ -268,12 +276,19 @@ public class GameController : Singleton<GameController> {
 
     public void winGame()
     {
-
+        playerReady = false;
+        otherReady = false;
+        photonView.RPC("loseGame", networkController.otherPlayer);
+        gameUIController.showWin();
+        gotoState(State.End);
     }
 
     public void loseGame()
     {
-
+        playerReady = false;
+        otherReady = false;
+        gameUIController.showLose();
+        gotoState(State.End);
     }
 
     void beginRound()
@@ -282,6 +297,10 @@ public class GameController : Singleton<GameController> {
         gotoState(State.Ice);
     }
 
+    public void replay()
+    {
+
+    }
 
     void OnGUI()
     {
