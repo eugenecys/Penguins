@@ -10,33 +10,94 @@ public class NetworkController : PUNSingleton<NetworkController>
     bool isHost;
 
     public PhotonPlayer otherPlayer;
-
     public RoomInfo[] rooms;
+
+    public RoomInfo currentRoom;
 
     public override void OnJoinedLobby()
     {
         networkMenuManager.setState(NetworkMenuManager.State.Active);
         Debug.Log("Joined Lobby");
+        Scan();
     }
 
     public override void OnJoinedRoom()
     {
         networkMenuManager.setState(NetworkMenuManager.State.Inactive);
-        Debug.Log("Joined Room: " + PhotonNetwork.room.name);
+        currentRoom = PhotonNetwork.room;
+        Debug.Log("Joined Room: " + currentRoom.name);
         gameController.readyToStart();
         if (PhotonNetwork.room.playerCount == 2)
         {
             otherPlayer = PhotonNetwork.otherPlayers[0];
             gameController.ready();
             gameController.photonView.RPC("ready", otherPlayer);
-            Debug.Log("Broadcasted Ready");
+        }
+    }
+
+
+    public override void OnReceivedRoomListUpdate()
+    {
+        Debug.Log("Received updates");
+        networkMenuManager.updateRoomList();
+    }
+
+    public override void OnLeftRoom()
+    {
+        updateState();
+    }
+
+    public override void OnPhotonPlayerDisconnected(PhotonPlayer otherPlayer)
+    {
+        Debug.Log("Player dropped");
+        gameController.dropGame();
+    }
+
+    public void Connect()
+    {
+        if (!PhotonNetwork.connected)
+        {
+            networkMenuManager.setState(NetworkMenuManager.State.Connecting);
+            PhotonNetwork.ConnectUsingSettings("0.4");
         }
     }
     
-    public void Init()
+    public void updateState()
     {
-        networkMenuManager.setState(NetworkMenuManager.State.Connecting);
-        PhotonNetwork.ConnectUsingSettings("0.3");
+        if (PhotonNetwork.inRoom)
+        {
+            networkMenuManager.setState(NetworkMenuManager.State.Inactive);
+        }
+        else if (PhotonNetwork.insideLobby && !PhotonNetwork.inRoom)
+        {
+            networkMenuManager.setState(NetworkMenuManager.State.Active);
+        }
+        else if (PhotonNetwork.connected && !PhotonNetwork.insideLobby)
+        {
+            networkMenuManager.setState(NetworkMenuManager.State.Connecting);
+            PhotonNetwork.JoinLobby();
+        }
+        else if (!PhotonNetwork.connected)
+        {
+            Connect();
+        }
+    }
+
+    public void disconnect()
+    {
+        networkMenuManager.setState(NetworkMenuManager.State.Inactive);
+        if (PhotonNetwork.connected)
+        {
+            PhotonNetwork.Disconnect();
+        }
+    }
+
+    public void quitRoom()
+    {
+        if (PhotonNetwork.inRoom)
+        {
+            PhotonNetwork.LeaveRoom();
+        }
     }
 
     public void RandomJoin()
@@ -47,18 +108,24 @@ public class NetworkController : PUNSingleton<NetworkController>
     public void Scan()
     {
         rooms = PhotonNetwork.GetRoomList();
+        networkMenuManager.updateRoomList();
         isHost = false;
     }
 
-    public void Join()
+    public void Join(string roomName)
     {
+        PhotonNetwork.JoinRoom(roomName);
         isHost = false;
     }
 
     public void Host()
     {
         isHost = true;
-        PhotonNetwork.CreateRoom("Hello");
+        RoomOptions roomOptions = new RoomOptions()
+        {
+            maxPlayers = 2
+        };
+        PhotonNetwork.CreateRoom(null, roomOptions, TypedLobby.Default);
         Debug.Log("Created Room");
     }
 
