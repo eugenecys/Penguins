@@ -135,12 +135,15 @@ public class GameController : Singleton<GameController> {
             case State.OtherIce:
                 //Waiting for other player to ice
                 waitScreen.SetActive(true);
+                grid.fade(Grid.Type.Player);
                 playerIce = true;
                 state = State.OtherIce;
                 break;
             case State.OtherAttack:
                 //Waiting for other player to attack;
                 waitScreen.SetActive(true);
+                grid.deactivate(Grid.Type.Other);
+                grid.fade(Grid.Type.Other);
                 playerAttack = true;
                 state = State.OtherAttack;
                 break;
@@ -276,34 +279,12 @@ public class GameController : Singleton<GameController> {
             }
             else if (state.Equals(State.Ice) && !playerIce)
             {
-                playerIce = true;
-                grid.ice(Grid.Type.Player, square.xIndex, square.yIndex);
-                photonView.RPC("ice", networkController.otherPlayer);
-                eventManager.addEvent(() => gotoState(State.OtherIce), 1, true);
-            }
-        }
-    }
-
-    void superhit(Vector3 position)
-    {
-        RaycastHit hit;
-        Ray ray = Camera.main.ScreenPointToRay(position);
-        if (Physics.Raycast(ray, out hit))
-        {
-            Square square = hit.collider.gameObject.GetComponent<Square>();
-            if (state.Equals(State.Attack) && !playerAttack)
-            {
-                playerAttack = true;
-                photonView.RPC("getAttacked", networkController.otherPlayer, square.xIndex, square.yIndex);
-                eventManager.addEvent(() => grid.attack(Grid.Type.Other, square.xIndex, square.yIndex), 1, true);
-                eventManager.addEvent(() => gotoState(State.OtherAttack), 2, true);
-            }
-            else if (state.Equals(State.Ice) && !playerIce)
-            {
-                playerIce = true;
-                grid.superice(Grid.Type.Player, square.xIndex, square.yIndex);
-                photonView.RPC("ice", networkController.otherPlayer);
-                eventManager.addEvent(() => gotoState(State.OtherIce), 1, true);
+                if (grid.ice(Grid.Type.Player, square.xIndex, square.yIndex))
+                {
+                    playerIce = true;
+                    photonView.RPC("ice", networkController.otherPlayer);
+                    eventManager.addEvent(() => gotoState(State.OtherIce), 1, true);
+                }
             }
         }
     }
@@ -323,16 +304,16 @@ public class GameController : Singleton<GameController> {
     }
 
     [PunRPC]
-    public void revealSquare(Square.State state, int x, int y) 
+    public void updateSquare(Square.State state, int x, int y) 
     {
         grid.setSquare(Grid.Type.Other, state, x, y);
     }
 
     public void updateOther(Square square)
     {
-        photonView.RPC("revealSquare", networkController.otherPlayer, square.state, square.xIndex, square.yIndex);
+        photonView.RPC("updateSquare", networkController.otherPlayer, square.state, square.xIndex, square.yIndex);
     }
-
+    
     public void initGame()
     {
         grid.InitializeGrid();
@@ -366,7 +347,6 @@ public class GameController : Singleton<GameController> {
 
     void beginRound()
     {
-        grid.fade(Grid.Type.Other);
         gotoState(State.Ice);
     }
 

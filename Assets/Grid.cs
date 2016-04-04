@@ -216,41 +216,47 @@ public class Grid : Singleton<Grid> {
         }
     }
     
-    public void ice(Type playerType, int x, int y)
+    public bool ice(Type playerType, int x, int y)
     {
         int type = (int)playerType;
-        grids[type, x, y].setState(Square.State.Ice);
+
+        if (grids[type, x, y].isFading)
+        {
+            return false;
+        }
+
+        grids[type, x, y].ice();
         if (y > 0)
         {
-            grids[type, x, y - 1].setState(Square.State.Ice);
+            grids[type, x, y - 1].ice();
         }
         if (y < height - 1)
         {
-            grids[type, x, y + 1].setState(Square.State.Ice);
+            grids[type, x, y + 1].ice();
         }
         if (x > 0)
         {
-            grids[type, x - 1, y].setState(Square.State.Ice);
+            grids[type, x - 1, y].ice();
             if (y > 0)
             {
-                grids[type, x - 1, y - 1].setState(Square.State.Ice);
+                grids[type, x - 1, y - 1].ice();
             }
             if (y < height - 1)
             {
-                grids[type, x - 1, y + 1].setState(Square.State.Ice);
+                grids[type, x - 1, y + 1].ice();
             }
         }
 
         if (x < length - 1)
         {
-            grids[type, x + 1, y].setState(Square.State.Ice);
+            grids[type, x + 1, y].ice();
             if (y > 0)
             {
-                grids[type, x + 1, y - 1].setState(Square.State.Ice);
+                grids[type, x + 1, y - 1].ice();
             }
             if (y < height - 1)
             {
-                grids[type, x + 1, y + 1].setState(Square.State.Ice);
+                grids[type, x + 1, y + 1].ice();
             }
         }
         
@@ -261,44 +267,45 @@ public class Grid : Singleton<Grid> {
         {
             gameController.winGame();
         }
+        return true;
     }
 
     public void attack(Type playerType, int x, int y)
     {
         int type = (int)playerType;
         
-        grids[type, x, y].setState(Square.State.Empty);
+        grids[type, x, y].explode();
         if (y > 0)
         {
-            grids[type, x, y - 1].setState(Square.State.Empty);
+            grids[type, x, y - 1].explode();
         }
         if (y < height - 1)
         {
-            grids[type, x, y + 1].setState(Square.State.Empty);
+            grids[type, x, y + 1].explode();
         }
         if (x > 0)
         {
-            grids[type, x - 1, y].setState(Square.State.Empty);
+            grids[type, x - 1, y].explode();
             if (y > 0)
             {
-                grids[type, x - 1, y - 1].setState(Square.State.Empty);
+                grids[type, x - 1, y - 1].explode();
             }
             if (y < height - 1)
             {
-                grids[type, x - 1, y + 1].setState(Square.State.Empty);
+                grids[type, x - 1, y + 1].explode();
             }
         }
 
         if (x < length - 1)
         {
-            grids[type, x + 1, y].setState(Square.State.Empty);
+            grids[type, x + 1, y].explode();
             if (y > 0)
             {
-                grids[type, x + 1, y - 1].setState(Square.State.Empty);
+                grids[type, x + 1, y - 1].explode();
             }
             if (y < height - 1)
             {
-                grids[type, x + 1, y + 1].setState(Square.State.Empty);
+                grids[type, x + 1, y + 1].explode();
             }
         }
 

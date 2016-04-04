@@ -11,8 +11,8 @@ public class Square : MonoBehaviour {
         Empty,
         IceInactive,
         EmptyInactive,
-        IceFading,
-        EmptyFading,
+        Fading,
+        FadingInactive,
         IceHighlight,
         EmptyHighlight
     }
@@ -29,7 +29,7 @@ public class Square : MonoBehaviour {
     {
         get
         {
-            return (state.Equals(State.Ice) || state.Equals(State.Empty));
+            return (state.Equals(State.Ice) || state.Equals(State.Empty) || state.Equals(State.Fading));
         }
     }
 
@@ -37,7 +37,7 @@ public class Square : MonoBehaviour {
     {
         get
         {
-            return state.Equals(State.Ice) || state.Equals(State.IceHighlight) || state.Equals(State.IceFading) || state.Equals(State.IceInactive);
+            return state.Equals(State.Ice) || state.Equals(State.IceHighlight)|| state.Equals(State.IceInactive);
         }
     }
 
@@ -45,7 +45,15 @@ public class Square : MonoBehaviour {
     {
         get
         {
-            return state.Equals(State.Empty) || state.Equals(State.EmptyHighlight) || state.Equals(State.EmptyFading) || state.Equals(State.EmptyInactive);
+            return state.Equals(State.Empty) || state.Equals(State.EmptyHighlight) || state.Equals(State.Fading) || state.Equals(State.EmptyInactive) || state.Equals(State.FadingInactive);
+        }
+    }
+
+    public bool isFading
+    {
+        get
+        {
+            return state.Equals(State.Fading) || state.Equals(State.FadingInactive);
         }
     }
 
@@ -58,7 +66,9 @@ public class Square : MonoBehaviour {
     public GameObject iceHighlightSprite;
 
     public GameObject[] dirtFadeSprites;
-    public GameObject[] iceFadeSprites;
+    public GameObject[] dirtFadeInactiveSprites;
+
+    public Animator flame;
 
     public State state;
     private int fadeNum;
@@ -79,8 +89,11 @@ public class Square : MonoBehaviour {
         {
             setState(State.IceInactive);
         }
-        else
+        else if (isFading)
         {
+            setState(State.FadingInactive);
+        }
+        else {
             setState(State.EmptyInactive);
         }
     }
@@ -90,6 +103,10 @@ public class Square : MonoBehaviour {
         if (isIce)
         {
             setState(State.Ice);
+        }
+        else if (isFading)
+        {
+            setState(State.Fading);
         }
         else
         {
@@ -107,9 +124,9 @@ public class Square : MonoBehaviour {
         {
             dirtFadeSprites[i].SetActive(false);
         }
-        for (int i = 0; i < iceFadeSprites.Length; i++)
+        for (int i = 0; i < dirtFadeInactiveSprites.Length; i++)
         {
-            iceFadeSprites[i].SetActive(false);
+            dirtFadeInactiveSprites[i].SetActive(false);
         }
         dirtHighlightSprite.SetActive(false);
         iceHighlightSprite.SetActive(false);
@@ -133,49 +150,13 @@ public class Square : MonoBehaviour {
                 state = State.IceInactive;
                 iceInactiveSprite.SetActive(true);
                 break;
-            case State.EmptyFading:
-                state = State.EmptyFading;
-                if (fadeNum >= dirtFadeSprites.Length)
-                {
-                    deactivate();
-                }
-                else
-                {
-                    for(int i = 0; i < dirtFadeSprites.Length; i++)
-                    {
-                        if (i == fadeNum)
-                        {
-                            dirtFadeSprites[i].SetActive(true);
-                        }
-                        else
-                        {
-                            dirtFadeSprites[i].SetActive(false);
-                        }
-                    }
-                    fadeNum++;
-                }
+            case State.Fading:
+                state = State.Fading;
+                dirtFadeSprites[fadeNum].SetActive(true);
                 break;
-            case State.IceFading:
-                state = State.IceFading;
-                if (fadeNum >= iceFadeSprites.Length)
-                {
-                    deactivate();
-                }
-                else
-                {
-                    for (int i = 0; i < iceFadeSprites.Length; i++)
-                    {
-                        if (i == fadeNum)
-                        {
-                            iceFadeSprites[i].SetActive(true);
-                        }
-                        else
-                        {
-                            iceFadeSprites[i].SetActive(false);
-                        }
-                        fadeNum++;
-                    }
-                }
+            case State.FadingInactive:
+                state = State.FadingInactive;
+                dirtFadeInactiveSprites[fadeNum].SetActive(true);
                 break;
             case State.EmptyHighlight:
                 state = State.EmptyHighlight;
@@ -211,18 +192,58 @@ public class Square : MonoBehaviour {
         }
     }
 
+    public void explode()
+    {
+        flame.SetTrigger("explode");
+        fadeNum = 0;
+        setState(State.Fading);
+    }
+    
     public void fade()
     {
-        if (state.Equals(State.Empty) || state.Equals(State.EmptyFading))
+        if (state.Equals(State.Fading))
         {
-            setState(State.EmptyFading);
+            fadeNum++;
+            if (fadeNum >= dirtFadeSprites.Length)
+            {
+                setState(State.Empty);
+                fadeNum = 0;
+            }
+            else
+            {
+                setState(State.Fading);
+            }
         }
-        else if (state.Equals(State.Ice) || state.Equals(State.IceFading)) 
+        else if (state.Equals(State.FadingInactive))
         {
-            setState(State.IceFading);
+            fadeNum++;
+            if (fadeNum >= dirtFadeInactiveSprites.Length)
+            {
+                setState(State.EmptyInactive);
+                fadeNum = 0;
+            }
+            else
+            {
+                setState(State.FadingInactive);
+            }
         }
     }
     
+    public void ice()
+    {
+        if (!state.Equals(State.Fading) && !state.Equals(State.FadingInactive))
+        {
+            if (active)
+            {
+                setState(State.Ice);
+            }
+            else
+            {
+                setState(State.IceInactive);
+            }
+        }
+    }
+
 	// Update is called once per frame
 	void Update () {
 	

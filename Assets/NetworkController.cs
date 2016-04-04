@@ -58,7 +58,7 @@ public class NetworkController : PUNSingleton<NetworkController>
         if (!PhotonNetwork.connected)
         {
             networkMenuManager.setState(NetworkMenuManager.State.Connecting);
-            PhotonNetwork.ConnectUsingSettings("0.4");
+            PhotonNetwork.ConnectUsingSettings("0.5");
         }
     }
     
