@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class Grid : Singleton<Grid> {
 
@@ -253,6 +254,13 @@ public class Grid : Singleton<Grid> {
             }
         }
 
+        Square[] path = getPath();
+        if (path != null)
+        {
+            highlightPath(path);
+        }
+
+
         bool found = searchPath();
         Debug.Log(found);
 
@@ -407,7 +415,7 @@ public class Grid : Singleton<Grid> {
                 gameController.updateOther(grids[type, x - 2, y + 1]);
             }
         }
-        if (x < length - 1)
+        if (x < length - 2)
         {
             grids[type, x + 2, y].activate();
             gameController.updateOther(grids[type, x + 2, y]);
@@ -421,14 +429,6 @@ public class Grid : Singleton<Grid> {
                 grids[type, x + 2, y + 1].activate();
                 gameController.updateOther(grids[type, x + 2, y + 1]);
             }
-        }
-
-        bool found = searchPath();
-        Debug.Log(found);
-
-        if (found)
-        {
-            gameController.winGame();
         }
     }
 
@@ -481,6 +481,26 @@ public class Grid : Singleton<Grid> {
         }
     }
     
+    public void unhightlightGrid(Type playerType)
+    {
+        int type = (int)playerType;
+        for (int i = 0; i < length; i++)
+        {
+            for (int j = 0; j < height; j++)
+            {
+                grids[type, i, j].unhighlight();
+            }
+        }
+    }
+
+    public void highlightPath(Square[] squares)
+    {
+        foreach(Square square in squares)
+        {
+            square.highlight();
+        }
+    }
+
     bool searchPath()
     {
         for (int i = 0; i < length; i++)
@@ -585,6 +605,111 @@ public class Grid : Singleton<Grid> {
         }
     }
 
+    public Square[] getPath()
+    {
+        for (int i = 0; i < length; i++)
+        {
+            if (grids[0, i, 0].iced)
+            {
+                return getPath(grids[0, i, 0]);
+            }
+        }
+        return null;
+    }
+
+    public Square[] getPath(Square start)
+    {
+        int[,] distanceGrid = new int[length, height];
+        for (int i = 0; i < length; i++)
+        {
+            for (int j = 0; j < height; j++)
+            {
+                distanceGrid[i, j] = -1;
+            }
+        }
+
+        distanceGrid[start.xIndex, start.yIndex] = 0;
+        Square[] path = closestDFS(start, distanceGrid);
+        Debug.Log("Path");
+        for (int i = 0; i < path.Length; i++)
+        {
+            Debug.Log(path[i]);
+        }
+        return path;
+    }
+
+    private Square[] closestDFS(Square from, int[,] distanceGrid)
+    {
+        Square[][] best = new Square[4][];
+
+        if (from.xIndex > 0 && grids[0, from.xIndex - 1, from.yIndex].state.Equals(Square.State.Ice))
+        {
+            if (distanceGrid[from.xIndex - 1, from.yIndex] == -1 || distanceGrid[from.xIndex - 1, from.yIndex] > (distanceGrid[from.xIndex, from.yIndex] + 1))
+            {
+                distanceGrid[from.xIndex - 1, from.yIndex] = distanceGrid[from.xIndex, from.yIndex] + 1;
+                best[0] = closestDFS(grids[0, from.xIndex - 1, from.yIndex], distanceGrid);
+            }
+        }
+
+        if (from.xIndex < (length - 1) && grids[0, from.xIndex + 1, from.yIndex].state.Equals(Square.State.Ice))
+        {
+            if (distanceGrid[from.xIndex + 1, from.yIndex] == -1 || distanceGrid[from.xIndex + 1, from.yIndex] > (distanceGrid[from.xIndex, from.yIndex] + 1))
+            {
+                distanceGrid[from.xIndex + 1, from.yIndex] = distanceGrid[from.xIndex, from.yIndex] + 1;
+                best[1] = closestDFS(grids[0, from.xIndex + 1, from.yIndex], distanceGrid);
+            }
+        }
+
+        if (from.yIndex > 0 && grids[0, from.xIndex, from.yIndex - 1].state.Equals(Square.State.Ice))
+        {
+            if (distanceGrid[from.xIndex, from.yIndex - 1] == -1 || distanceGrid[from.xIndex, from.yIndex - 1] > (distanceGrid[from.xIndex, from.yIndex] + 1))
+            {
+                distanceGrid[from.xIndex, from.yIndex - 1] = distanceGrid[from.xIndex, from.yIndex] + 1;
+                best[2] = closestDFS(grids[0, from.xIndex, from.yIndex - 1], distanceGrid);
+            }
+        }
+        
+        if (from.yIndex < (height - 1) && grids[0, from.xIndex, from.yIndex + 1].state.Equals(Square.State.Ice))
+        {
+            if (distanceGrid[from.xIndex, from.yIndex + 1] == -1 || distanceGrid[from.xIndex, from.yIndex + 1] > (distanceGrid[from.xIndex, from.yIndex] + 1))
+            {
+                distanceGrid[from.xIndex, from.yIndex + 1] = distanceGrid[from.xIndex, from.yIndex] + 1;
+                best[3] = closestDFS(grids[0, from.xIndex, from.yIndex + 1], distanceGrid);
+            }
+        }
+        
+        int nearestIdx = -1;
+        int bestLength = 1000;
+        int curDist = 0;
+        int nextDist;
+        for (int i = 0; i < 4; i++)
+        {
+            if (best[i] != null && best[i].Length > 0)
+            {
+                nextDist = best[i][0].yIndex;
+                if (nextDist > curDist || (nextDist == curDist && bestLength > best[i].Length))
+                {
+                    nearestIdx = i;
+                    curDist = nextDist;
+                    bestLength = best[i].Length;
+                }
+            }
+        }
+
+        if (nearestIdx == -1)
+        {
+            return new Square[] { from };
+        }
+        else {
+            Square[] currentChain = new Square[best[nearestIdx].Length + 1];
+            for (int i = 0; i < best[nearestIdx].Length; i++)
+            {
+                currentChain[i] = best[nearestIdx][i];
+                currentChain[currentChain.Length - 1] = from;
+            }
+            return currentChain;
+        }
+    }
 
     //Old methods, need refactor
     /*
