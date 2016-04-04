@@ -253,14 +253,7 @@ public class Grid : Singleton<Grid> {
                 grids[type, x + 1, y + 1].setState(Square.State.Ice);
             }
         }
-
-        Square[] path = getPath();
-        if (path != null)
-        {
-            highlightPath(path);
-        }
-
-
+        
         bool found = searchPath();
         Debug.Log(found);
 

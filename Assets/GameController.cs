@@ -341,6 +341,7 @@ public class GameController : Singleton<GameController> {
     public void dropGame()
     {
         networkController.quitRoom();
+        gameUIController.hideAll();
         resetGame();
         gotoState(State.Network);
     }
@@ -371,7 +372,12 @@ public class GameController : Singleton<GameController> {
 
     public void replay()
     {
-        resetGame();
+        gameUIController.hideAll();
+        grid.Destroy();
+        playerIce = false;
+        playerAttack = false;
+        otherIce = false;
+        otherAttack = false;
         initGame();
         gotoState(State.Wait);
     }
