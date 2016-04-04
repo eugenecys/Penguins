@@ -23,7 +23,8 @@ public class GameUIController : Singleton<GameUIController> {
         Dirt,
         DirtInactive,
         Win,
-        Lose
+        Lose,
+        Inactive
     }
 
     public State state;
@@ -71,6 +72,9 @@ public class GameUIController : Singleton<GameUIController> {
             case State.IceInactive:
                 iceBGInactive.SetActive(true);
                 break;
+            case State.Inactive:
+                break;
+
         }
     }
     
@@ -98,6 +102,11 @@ public class GameUIController : Singleton<GameUIController> {
         lose.SetActive(false);
         replay.SetActive(false);
         notificationText.gameObject.SetActive(false);
+    }
+
+    public void hideAll()
+    {
+        setState(State.Inactive);
     }
 
 	// Use this for initialization

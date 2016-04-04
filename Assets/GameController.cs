@@ -255,7 +255,7 @@ public class GameController : Singleton<GameController> {
             }
             else if (Input.GetMouseButtonDown(1))
             {
-                superhit(Input.mousePosition);
+                winGame();
             }
         }
     }
@@ -378,6 +378,7 @@ public class GameController : Singleton<GameController> {
 
     public void resetGame()
     {
+        gameUIController.hideAll();
         grid.Destroy();
         playerIce = false;
         playerAttack = false;
