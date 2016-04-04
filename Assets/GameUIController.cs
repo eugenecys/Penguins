@@ -40,7 +40,7 @@ public class GameUIController : Singleton<GameUIController> {
     {
         iceBG.SetActive(false);
         iceBGInactive.SetActive(false);
-        icedirtBG.SetActive(true);
+        icedirtBG.SetActive(false);
         icedirtBGInactive.SetActive(false);
         win.SetActive(false);
         lose.SetActive(false);

@@ -119,6 +119,102 @@ public class Grid : Singleton<Grid> {
         grid.transform.localScale = new Vector3(1, 1, 1);
     }
 
+    public void superice(Type playerType, int x, int y)
+    {
+        int type = (int)playerType;
+        grids[type, x, y].setState(Square.State.Ice);
+        if (y > 0)
+        {
+            grids[type, x, y - 1].setState(Square.State.Ice);
+        }
+        if (y > 1)
+        {
+            grids[type, x, y - 2].setState(Square.State.Ice);
+        }
+        if (y < height - 1)
+        {
+            grids[type, x, y + 1].setState(Square.State.Ice);
+        }
+        if (y < height - 2)
+        {
+            grids[type, x, y + 2].setState(Square.State.Ice);
+        }
+        if (x > 0)
+        {
+            grids[type, x - 1, y].setState(Square.State.Ice);
+            if (y > 0)
+            {
+                grids[type, x - 1, y - 1].setState(Square.State.Ice);
+            }
+            if (y < height - 1)
+            {
+                grids[type, x - 1, y + 1].setState(Square.State.Ice);
+            }
+            if (y > 1)
+            {
+                grids[type, x - 1, y - 2].setState(Square.State.Ice);
+            }
+            if (y < height - 2)
+            {
+                grids[type, x - 1, y + 2].setState(Square.State.Ice);
+            }
+        }
+
+        if (x < length - 1)
+        {
+            grids[type, x + 1, y].setState(Square.State.Ice);
+            if (y > 0)
+            {
+                grids[type, x + 1, y - 1].setState(Square.State.Ice);
+            }
+            if (y < height - 1)
+            {
+                grids[type, x + 1, y + 1].setState(Square.State.Ice);
+            }
+            if (y > 1)
+            {
+                grids[type, x + 1, y - 2].setState(Square.State.Ice);
+            }
+            if (y < height - 2)
+            {
+                grids[type, x + 1, y + 2].setState(Square.State.Ice);
+            }
+        }
+
+        if (x > 1)
+        {
+            grids[type, x - 2, y].setState(Square.State.Ice);
+            if (y > 0)
+            {
+                grids[type, x - 2, y - 1].setState(Square.State.Ice);
+            }
+            if (y < height - 1)
+            {
+                grids[type, x - 2, y + 1].setState(Square.State.Ice);
+            }
+        }
+        if (x < length - 1)
+        {
+            grids[type, x + 2, y].setState(Square.State.Ice);
+            if (y > 0)
+            {
+                grids[type, x + 2, y - 1].setState(Square.State.Ice);
+            }
+            if (y < height - 1)
+            {
+                grids[type, x + 2, y + 1].setState(Square.State.Ice);
+            }
+        }
+
+        bool found = searchPath();
+        Debug.Log(found);
+
+        if (found)
+        {
+            gameController.winGame();
+        }
+    }
+    
     public void ice(Type playerType, int x, int y)
     {
         int type = (int)playerType;
@@ -217,6 +313,123 @@ public class Grid : Singleton<Grid> {
     {
         int type = (int)playerType;
         grids[type, x, y].setState(_state);
+    }
+
+    public void superreveal (Type playerType, int x, int y)
+    {
+        int type = (int)playerType;
+        grids[type, x, y].activate();
+        gameController.updateOther(grids[type, x, y]);
+        if (y > 0)
+        {
+            grids[type, x, y - 1].activate();
+            gameController.updateOther(grids[type, x, y - 1]);
+        }
+        if (y > 1)
+        {
+            grids[type, x, y - 2].activate();
+            gameController.updateOther(grids[type, x, y - 2]);
+        }
+        if (y < height - 1)
+        {
+            grids[type, x, y + 1].activate();
+            gameController.updateOther(grids[type, x, y + 1]);
+        }
+        if (y < height - 2)
+        {
+            grids[type, x, y + 2].activate();
+            gameController.updateOther(grids[type, x, y + 2]);
+        }
+        if (x > 0)
+        {
+            grids[type, x - 1, y].activate();
+            gameController.updateOther(grids[type, x - 1, y]);
+            if (y > 0)
+            {
+                grids[type, x - 1, y - 1].activate();
+                gameController.updateOther(grids[type, x - 1, y - 1]);
+            }
+            if (y < height - 1)
+            {
+                grids[type, x - 1, y + 1].activate();
+                gameController.updateOther(grids[type, x - 1, y + 1]);
+            }
+            if (y > 1)
+            {
+                grids[type, x - 1, y - 2].activate();
+                gameController.updateOther(grids[type, x - 1, y - 2]);
+            }
+            if (y < height - 2)
+            {
+                grids[type, x - 1, y + 2].activate();
+                gameController.updateOther(grids[type, x - 1, y + 2]);
+            }
+        }
+
+        if (x < length - 1)
+        {
+            grids[type, x + 1, y].activate();
+            gameController.updateOther(grids[type, x + 1, y]);
+            if (y > 0)
+            {
+                grids[type, x + 1, y - 1].activate();
+                gameController.updateOther(grids[type, x + 1, y - 1]);
+            }
+            if (y < height - 1)
+            {
+                grids[type, x + 1, y + 1].activate();
+                gameController.updateOther(grids[type, x + 1, y + 1]);
+            }
+            if (y > 1)
+            {
+                grids[type, x + 1, y - 2].activate();
+                gameController.updateOther(grids[type, x + 1, y - 2]);
+            }
+            if (y < height - 2)
+            {
+                grids[type, x + 1, y + 2].activate();
+                gameController.updateOther(grids[type, x + 1, y + 2]);
+            }
+        }
+
+        if (x > 1)
+        {
+            grids[type, x - 2, y].activate();
+            gameController.updateOther(grids[type, x - 2, y]);
+            if (y > 0)
+            {
+                grids[type, x - 2, y - 1].activate();
+                gameController.updateOther(grids[type, x - 2, y - 1]);
+            }
+            if (y < height - 1)
+            {
+                grids[type, x - 2, y + 1].activate();
+                gameController.updateOther(grids[type, x - 2, y + 1]);
+            }
+        }
+        if (x < length - 1)
+        {
+            grids[type, x + 2, y].activate();
+            gameController.updateOther(grids[type, x + 2, y]);
+            if (y > 0)
+            {
+                grids[type, x + 2, y - 1].activate();
+                gameController.updateOther(grids[type, x + 2, y - 1]);
+            }
+            if (y < height - 1)
+            {
+                grids[type, x + 2, y + 1].activate();
+                gameController.updateOther(grids[type, x + 2, y + 1]);
+            }
+        }
+
+        bool found = searchPath();
+        Debug.Log(found);
+
+        if (found)
+        {
+            gameController.winGame();
+        }
     }
 
     public void reveal(Type playerType, int x, int y)

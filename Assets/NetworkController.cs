@@ -36,7 +36,7 @@ public class NetworkController : PUNSingleton<NetworkController>
     public void Init()
     {
         networkMenuManager.setState(NetworkMenuManager.State.Connecting);
-        PhotonNetwork.ConnectUsingSettings("0.2.1");
+        PhotonNetwork.ConnectUsingSettings("0.3");
     }
 
     public void RandomJoin()

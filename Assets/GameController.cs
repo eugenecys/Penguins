@@ -211,11 +211,14 @@ public class GameController : Singleton<GameController> {
                 }
             }
         }
-        else if (platform == RuntimePlatform.WindowsEditor)
+        else if (platform == RuntimePlatform.WindowsEditor || platform == RuntimePlatform.WindowsPlayer || platform == RuntimePlatform.WindowsWebPlayer)
         {
             if (Input.GetMouseButtonDown(0))
             {
                 hit(Input.mousePosition);
+            } else if (Input.GetMouseButtonDown(1))
+            {
+                superhit(Input.mousePosition);
             }
         }
     }
@@ -244,6 +247,30 @@ public class GameController : Singleton<GameController> {
         }
     }
 
+    void superhit(Vector3 position)
+    {
+        RaycastHit hit;
+        Ray ray = Camera.main.ScreenPointToRay(position);
+        if (Physics.Raycast(ray, out hit))
+        {
+            Square square = hit.collider.gameObject.GetComponent<Square>();
+            if (state.Equals(State.Attack) && !playerAttack)
+            {
+                playerAttack = true;
+                photonView.RPC("getAttacked", networkController.otherPlayer, square.xIndex, square.yIndex);
+                eventManager.addEvent(() => grid.destroy(Grid.Type.Other, square.xIndex, square.yIndex), 1, true);
+                eventManager.addEvent(() => gotoState(State.OtherAttack), 2, true);
+            }
+            else if (state.Equals(State.Ice) && !playerIce)
+            {
+                playerIce = true;
+                grid.superice(Grid.Type.Player, square.xIndex, square.yIndex);
+                photonView.RPC("ice", networkController.otherPlayer);
+                eventManager.addEvent(() => gotoState(State.OtherIce), 1, true);
+            }
+        }
+    }
+
     [PunRPC]
     public void ice()
     {
@@ -254,7 +281,7 @@ public class GameController : Singleton<GameController> {
     public void getAttacked(int x, int y)
     {
         otherAttack = true;
-        grid.reveal(Grid.Type.Player, x, y);
+        grid.superreveal(Grid.Type.Player, x, y);
         grid.destroy(Grid.Type.Player, x, y);
     }
 
@@ -283,6 +310,7 @@ public class GameController : Singleton<GameController> {
         gotoState(State.End);
     }
 
+    [PunRPC]
     public void loseGame()
     {
         playerReady = false;
