@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.UI;
 
 public class GameUIController : Singleton<GameUIController> {
     
@@ -10,6 +11,7 @@ public class GameUIController : Singleton<GameUIController> {
     public GameObject win;
     public GameObject lose;
     public GameObject replay;
+    public Text notificationText;
 
     EventManager eventManager;
     GameController gameController;
@@ -45,7 +47,7 @@ public class GameUIController : Singleton<GameUIController> {
         win.SetActive(false);
         lose.SetActive(false);
         replay.SetActive(false);
-
+        notificationText.gameObject.SetActive(false);
         state = _state;
         switch(state)
         {
@@ -72,6 +74,17 @@ public class GameUIController : Singleton<GameUIController> {
         }
     }
     
+    public void Notify(string message)
+    {
+        notificationText.gameObject.SetActive(true);
+        notificationText.text = message;
+    }
+
+    public void EndNotify()
+    {
+        notificationText.gameObject.SetActive(false);
+    }
+
     void Awake()
     {
         eventManager = EventManager.Instance;
@@ -81,6 +94,10 @@ public class GameUIController : Singleton<GameUIController> {
         iceBGInactive.SetActive(false);
         icedirtBG.SetActive(false);
         icedirtBGInactive.SetActive(false);
+        win.SetActive(false);
+        lose.SetActive(false);
+        replay.SetActive(false);
+        notificationText.gameObject.SetActive(false);
     }
 
 	// Use this for initialization
