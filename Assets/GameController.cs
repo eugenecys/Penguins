@@ -79,6 +79,29 @@ public class GameController : Singleton<GameController> {
         //uiController.showStartMenu();
     }
 
+    public void back()
+    {
+        switch (state)
+        {
+            case State.Network:
+                gotoState(State.Menu);
+                break;
+            case State.Menu:
+                break;
+            case State.Ice:
+            case State.Attack:
+            case State.OtherAttack:
+            case State.OtherIce:
+            case State.Begin:
+            case State.Wait:
+                break;
+            case State.End:
+                break;
+            case State.Pause:
+                break;
+        }
+    }
+
     public void gotoState(State _state)
     {
         switch (_state)
@@ -86,14 +109,14 @@ public class GameController : Singleton<GameController> {
             case State.Network:
                 //Hosting, Joining a game
                 state = State.Network;
-                networkController.Init();
-                networkController.Scan();
+                networkController.updateState();
                 mainMenuManager.disable();
                 break;
             case State.Menu:
                 //Main Menu
                 state = State.Menu;
                 mainMenuManager.enable();
+                networkController.disconnect();
                 break;
             case State.Ice:
                 //Icing your own area
@@ -104,6 +127,7 @@ public class GameController : Singleton<GameController> {
                 //Tutorial?
                 state = State.Begin;
                 waitScreen.SetActive(true);
+                gameUIController.Notify(networkController.currentRoom.name);
                 initGame();
                 mainMenuManager.disable();
                 playerReady = true;
@@ -145,6 +169,7 @@ public class GameController : Singleton<GameController> {
 
     // Update is called once per frame
     void Update() {
+        detectBack();
         switch (state)
         {
             case State.Ice:
@@ -162,6 +187,7 @@ public class GameController : Singleton<GameController> {
                     otherReady = false;
                     playerReady = false;
                     waitScreen.SetActive(false);
+                    gameUIController.EndNotify();
                     beginRound();
                 }
                 break;
@@ -196,6 +222,16 @@ public class GameController : Singleton<GameController> {
                     playerReady = false;
                 }
                 break;
+            default:
+                break;
+        }
+    }
+
+    void detectBack()
+    {
+        if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Escape))
+        {
+            back();
         }
     }
 
@@ -216,7 +252,8 @@ public class GameController : Singleton<GameController> {
             if (Input.GetMouseButtonDown(0))
             {
                 hit(Input.mousePosition);
-            } else if (Input.GetMouseButtonDown(1))
+            }
+            else if (Input.GetMouseButtonDown(1))
             {
                 superhit(Input.mousePosition);
             }
@@ -234,7 +271,7 @@ public class GameController : Singleton<GameController> {
             {
                 playerAttack = true;
                 photonView.RPC("getAttacked", networkController.otherPlayer, square.xIndex, square.yIndex);
-                eventManager.addEvent(() => grid.destroy(Grid.Type.Other, square.xIndex, square.yIndex), 1, true);
+                eventManager.addEvent(() => grid.attack(Grid.Type.Other, square.xIndex, square.yIndex), 1, true);
                 eventManager.addEvent(() => gotoState(State.OtherAttack), 2, true);
             }
             else if (state.Equals(State.Ice) && !playerIce)
@@ -258,7 +295,7 @@ public class GameController : Singleton<GameController> {
             {
                 playerAttack = true;
                 photonView.RPC("getAttacked", networkController.otherPlayer, square.xIndex, square.yIndex);
-                eventManager.addEvent(() => grid.destroy(Grid.Type.Other, square.xIndex, square.yIndex), 1, true);
+                eventManager.addEvent(() => grid.attack(Grid.Type.Other, square.xIndex, square.yIndex), 1, true);
                 eventManager.addEvent(() => gotoState(State.OtherAttack), 2, true);
             }
             else if (state.Equals(State.Ice) && !playerIce)
@@ -282,7 +319,7 @@ public class GameController : Singleton<GameController> {
     {
         otherAttack = true;
         grid.superreveal(Grid.Type.Player, x, y);
-        grid.destroy(Grid.Type.Player, x, y);
+        grid.attack(Grid.Type.Player, x, y);
     }
 
     [PunRPC]
@@ -301,22 +338,29 @@ public class GameController : Singleton<GameController> {
         grid.InitializeGrid();
     }
 
+    public void dropGame()
+    {
+        networkController.quitRoom();
+        resetGame();
+        gotoState(State.Network);
+    }
+
     public void winGame()
     {
+        gotoState(State.End);
         playerReady = false;
         otherReady = false;
         photonView.RPC("loseGame", networkController.otherPlayer);
         gameUIController.showWin();
-        gotoState(State.End);
     }
 
     [PunRPC]
     public void loseGame()
     {
+        gotoState(State.End);
         playerReady = false;
         otherReady = false;
         gameUIController.showLose();
-        gotoState(State.End);
     }
 
     void beginRound()
@@ -327,7 +371,20 @@ public class GameController : Singleton<GameController> {
 
     public void replay()
     {
+        resetGame();
+        initGame();
+        gotoState(State.Wait);
+    }
 
+    public void resetGame()
+    {
+        grid.Destroy();
+        playerIce = false;
+        playerAttack = false;
+        otherIce = false;
+        otherAttack = false;
+        playerReady = false;
+        otherReady = false;
     }
 
     void OnGUI()
