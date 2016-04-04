@@ -1,11 +1,15 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.UI;
 
 public class NetworkMenuManager : Singleton<NetworkMenuManager> {
 
     NetworkController networkController;
     public Canvas canvas;
     public GameObject connecting;
+
+    public RectTransform roomCanvas;
+    public GameObject roomObject;
 
     public enum State
     {
@@ -36,6 +40,12 @@ public class NetworkMenuManager : Singleton<NetworkMenuManager> {
         }
     }
     
+    public void join(string text)
+    {
+        Debug.Log("Joining: " + text);
+        networkController.Join(text);
+    }
+
     public void randomJoin()
     {
         networkController.RandomJoin();
@@ -49,10 +59,6 @@ public class NetworkMenuManager : Singleton<NetworkMenuManager> {
     public void scan()
     {
         networkController.Scan();
-        foreach (RoomInfo game in networkController.rooms)
-        {
-            Debug.Log(game.name + " " + game.playerCount + "/" + game.maxPlayers);
-        }
     }
     
     public void join(int i)
@@ -63,6 +69,30 @@ public class NetworkMenuManager : Singleton<NetworkMenuManager> {
     public void host()
     {
         networkController.Host();
+    }
+
+    public void updateRoomList()
+    {
+        int height = 100;
+        int width = 480;
+        int space = 30;
+        int viewportWidth = 720;
+        foreach (Transform child in roomCanvas.transform)
+        {
+            Destroy(child.gameObject);
+        }
+        int totalRooms = networkController.rooms.Length;
+        Debug.Log("Total Rooms: " + totalRooms);
+        for (int i = 0; i < totalRooms; i++)
+        {
+            GameObject sObj = Object.Instantiate(roomObject, new Vector3(0, 0, 0), Quaternion.identity) as GameObject;
+            sObj.transform.parent = roomCanvas.transform;
+            RectTransform rect = sObj.GetComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(width, height);
+            rect.localPosition = new Vector2(viewportWidth/2, -((space + height) * i + space + height / 2));
+            sObj.GetComponentInChildren<Text>().text = networkController.rooms[i].name;
+        }
+        roomCanvas.sizeDelta = new Vector2(0, (space + height) * totalRooms + space);
     }
 
     void Awake()
