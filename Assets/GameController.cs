@@ -39,9 +39,7 @@ public class GameController : Singleton<GameController> {
     private bool otherAttack;
     private bool playerReady;
     private bool otherReady;
-
-    public GameObject waitScreen;
-
+    
     public void readyToStart()
     {
         gotoState(State.Begin);
@@ -62,8 +60,7 @@ public class GameController : Singleton<GameController> {
 
         mainMenuManager = MainMenuManager.Instance;
         networkMenuManager = NetworkMenuManager.Instance;
-
-        waitScreen.SetActive(false);
+        
     }
 
     // Use this for initialization
@@ -126,7 +123,7 @@ public class GameController : Singleton<GameController> {
             case State.Begin:
                 //Tutorial?
                 state = State.Begin;
-                waitScreen.SetActive(true);
+                gameUIController.setState(GameUIController.State.Waiting);
                 gameUIController.Notify(networkController.currentRoom.name);
                 initGame();
                 mainMenuManager.disable();
@@ -134,14 +131,14 @@ public class GameController : Singleton<GameController> {
                 break;
             case State.OtherIce:
                 //Waiting for other player to ice
-                waitScreen.SetActive(true);
+                gameUIController.setState(GameUIController.State.Waiting);
                 grid.fade(Grid.Type.Player);
                 playerIce = true;
                 state = State.OtherIce;
                 break;
             case State.OtherAttack:
                 //Waiting for other player to attack;
-                waitScreen.SetActive(true);
+                gameUIController.setState(GameUIController.State.Waiting);
                 grid.deactivate(Grid.Type.Other);
                 playerAttack = true;
                 state = State.OtherAttack;
@@ -162,7 +159,7 @@ public class GameController : Singleton<GameController> {
             case State.Wait:
                 //Waiting for other player to be ready
                 state = State.Wait;
-                waitScreen.SetActive(true);
+                gameUIController.setState(GameUIController.State.Waiting);
                 playerReady = true;
                 photonView.RPC("ready", networkController.otherPlayer);
                 break;
@@ -188,7 +185,7 @@ public class GameController : Singleton<GameController> {
                     networkController.retrieveOtherPlayer();
                     otherReady = false;
                     playerReady = false;
-                    waitScreen.SetActive(false);
+                    gameUIController.setState(GameUIController.State.Inactive);
                     gameUIController.EndNotify();
                     beginRound();
                 }
@@ -198,7 +195,7 @@ public class GameController : Singleton<GameController> {
             case State.OtherIce:
                 if (otherIce && playerIce)
                 {
-                    waitScreen.SetActive(false);
+                    gameUIController.setState(GameUIController.State.Inactive);
                     gotoState(State.Attack);
                     otherIce = false;
                     playerIce = false;
@@ -207,7 +204,7 @@ public class GameController : Singleton<GameController> {
             case State.OtherAttack:
                 if (otherAttack && playerAttack)
                 {
-                    waitScreen.SetActive(false);
+                    gameUIController.setState(GameUIController.State.Inactive);
                     gotoState(State.Wait);
                     otherAttack = false;
                     playerAttack = false;
@@ -218,7 +215,7 @@ public class GameController : Singleton<GameController> {
             case State.Wait:
                 if (otherReady && playerReady)
                 {
-                    waitScreen.SetActive(false);
+                    gameUIController.setState(GameUIController.State.Inactive);
                     beginRound();
                     otherReady = false;
                     playerReady = false;

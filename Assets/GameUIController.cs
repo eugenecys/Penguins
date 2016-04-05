@@ -4,13 +4,10 @@ using UnityEngine.UI;
 
 public class GameUIController : Singleton<GameUIController> {
     
-    public GameObject iceBG;
-    public GameObject iceBGInactive;
-    public GameObject icedirtBG;
-    public GameObject icedirtBGInactive;
     public GameObject win;
     public GameObject lose;
     public GameObject replay;
+    public GameObject waitScreen;
     public Text notificationText;
 
     EventManager eventManager;
@@ -18,13 +15,10 @@ public class GameUIController : Singleton<GameUIController> {
 
     public enum State
     {
-        Ice,
-        IceInactive,
-        Dirt,
-        DirtInactive,
         Win,
         Lose,
-        Inactive
+        Inactive,
+        Waiting
     }
 
     public State state;
@@ -41,13 +35,10 @@ public class GameUIController : Singleton<GameUIController> {
 
     public void setState(State _state)
     {
-        iceBG.SetActive(false);
-        iceBGInactive.SetActive(false);
-        icedirtBG.SetActive(false);
-        icedirtBGInactive.SetActive(false);
         win.SetActive(false);
         lose.SetActive(false);
         replay.SetActive(false);
+        waitScreen.SetActive(false);
         notificationText.gameObject.SetActive(false);
         state = _state;
         switch(state)
@@ -60,17 +51,8 @@ public class GameUIController : Singleton<GameUIController> {
                 win.SetActive(true);
                 eventManager.addEvent(() => replay.SetActive(true), 1, true);
                 break;
-            case State.Dirt:
-                icedirtBG.SetActive(true);
-                break;
-            case State.DirtInactive:
-                icedirtBGInactive.SetActive(true);
-                break;
-            case State.Ice:
-                iceBG.SetActive(true);
-                break;
-            case State.IceInactive:
-                iceBGInactive.SetActive(true);
+            case State.Waiting:
+                waitScreen.SetActive(true);
                 break;
             case State.Inactive:
                 break;
@@ -93,14 +75,11 @@ public class GameUIController : Singleton<GameUIController> {
     {
         eventManager = EventManager.Instance;
         gameController = GameController.Instance;
-
-        iceBG.SetActive(false);
-        iceBGInactive.SetActive(false);
-        icedirtBG.SetActive(false);
-        icedirtBGInactive.SetActive(false);
+        
         win.SetActive(false);
         lose.SetActive(false);
         replay.SetActive(false);
+        waitScreen.SetActive(false);
         notificationText.gameObject.SetActive(false);
     }
 
