@@ -88,7 +88,9 @@ public class Grid : Singleton<Grid> {
             for (int j = 0; j < height; j++)
             {
                 grids[0, i, j].setState(Square.State.Empty);
+                grids[0, i, j].setColor(Square.TileColor.Blue);
                 grids[1, i, j].setState(Square.State.EmptyInactive);
+                grids[1, i, j].setColor(Square.TileColor.Red);
             }
         }
     }
@@ -325,160 +327,135 @@ public class Grid : Singleton<Grid> {
 
     public void superreveal (Type playerType, int x, int y)
     {
-        int type = (int)playerType;
-        grids[type, x, y].activate();
-        gameController.updateOther(grids[type, x, y]);
+        revealSquare(playerType, x, y);
         if (y > 0)
         {
-            grids[type, x, y - 1].activate();
-            gameController.updateOther(grids[type, x, y - 1]);
+            revealSquare(playerType,  x, y - 1);
         }
         if (y > 1)
         {
-            grids[type, x, y - 2].activate();
-            gameController.updateOther(grids[type, x, y - 2]);
+            revealSquare(playerType,  x, y - 2);
         }
         if (y < height - 1)
         {
-            grids[type, x, y + 1].activate();
-            gameController.updateOther(grids[type, x, y + 1]);
+            revealSquare(playerType,  x, y + 1);
         }
         if (y < height - 2)
         {
-            grids[type, x, y + 2].activate();
-            gameController.updateOther(grids[type, x, y + 2]);
+            revealSquare(playerType,  x, y + 2);
         }
         if (x > 0)
         {
-            grids[type, x - 1, y].activate();
-            gameController.updateOther(grids[type, x - 1, y]);
+            revealSquare(playerType,  x - 1, y);
             if (y > 0)
             {
-                grids[type, x - 1, y - 1].activate();
-                gameController.updateOther(grids[type, x - 1, y - 1]);
+                revealSquare(playerType,  x - 1, y - 1);
             }
             if (y < height - 1)
             {
-                grids[type, x - 1, y + 1].activate();
-                gameController.updateOther(grids[type, x - 1, y + 1]);
+                revealSquare(playerType,  x - 1, y + 1);
             }
             if (y > 1)
             {
-                grids[type, x - 1, y - 2].activate();
-                gameController.updateOther(grids[type, x - 1, y - 2]);
+                revealSquare(playerType,  x - 1, y - 2);
             }
             if (y < height - 2)
             {
-                grids[type, x - 1, y + 2].activate();
-                gameController.updateOther(grids[type, x - 1, y + 2]);
+                revealSquare(playerType,  x - 1, y + 2);
             }
         }
 
         if (x < length - 1)
         {
-            grids[type, x + 1, y].activate();
-            gameController.updateOther(grids[type, x + 1, y]);
+            revealSquare(playerType,  x + 1, y);
             if (y > 0)
             {
-                grids[type, x + 1, y - 1].activate();
-                gameController.updateOther(grids[type, x + 1, y - 1]);
+                revealSquare(playerType,  x + 1, y - 1);
             }
             if (y < height - 1)
             {
-                grids[type, x + 1, y + 1].activate();
-                gameController.updateOther(grids[type, x + 1, y + 1]);
+                revealSquare(playerType,  x + 1, y + 1);
             }
             if (y > 1)
             {
-                grids[type, x + 1, y - 2].activate();
-                gameController.updateOther(grids[type, x + 1, y - 2]);
+                revealSquare(playerType,  x + 1, y - 2);
             }
             if (y < height - 2)
             {
-                grids[type, x + 1, y + 2].activate();
-                gameController.updateOther(grids[type, x + 1, y + 2]);
+                revealSquare(playerType,  x + 1, y + 2);
             }
         }
 
         if (x > 1)
         {
-            grids[type, x - 2, y].activate();
-            gameController.updateOther(grids[type, x - 2, y]);
+            revealSquare(playerType,  x - 2, y);
             if (y > 0)
             {
-                grids[type, x - 2, y - 1].activate();
-                gameController.updateOther(grids[type, x - 2, y - 1]);
+                revealSquare(playerType,  x - 2, y - 1);
             }
             if (y < height - 1)
             {
-                grids[type, x - 2, y + 1].activate();
-                gameController.updateOther(grids[type, x - 2, y + 1]);
+                revealSquare(playerType,  x - 2, y + 1);
             }
         }
         if (x < length - 2)
         {
-            grids[type, x + 2, y].activate();
-            gameController.updateOther(grids[type, x + 2, y]);
+            revealSquare(playerType,  x + 2, y);
             if (y > 0)
             {
-                grids[type, x + 2, y - 1].activate();
-                gameController.updateOther(grids[type, x + 2, y - 1]);
+                revealSquare(playerType,  x + 2, y - 1);
             }
             if (y < height - 1)
             {
-                grids[type, x + 2, y + 1].activate();
-                gameController.updateOther(grids[type, x + 2, y + 1]);
+                revealSquare(playerType,  x + 2, y + 1);
             }
         }
     }
 
-    public void reveal(Type playerType, int x, int y)
+    public void revealArea(Type playerType, int x, int y)
     {
-        int type = (int)playerType;
-        grids[type, x, y].activate();
-        gameController.updateOther(grids[type, x, y]);
+        revealSquare(playerType, x, y);
         if (y > 0)
         {
-            grids[type, x, y - 1].activate();
-            gameController.updateOther(grids[type, x, y - 1]);
+            revealSquare(playerType, x, y - 1);
         }
         if (y < height - 1)
         {
-            grids[type, x, y + 1].activate();
-            gameController.updateOther(grids[type, x, y + 1]);
+            revealSquare(playerType, x, y + 1);
         }
         if (x > 0)
         {
-            grids[type, x - 1, y].activate();
-            gameController.updateOther(grids[type, x - 1, y]);
+            revealSquare(playerType, x - 1, y);
 
             if (y > 0)
             {
-                grids[type, x - 1, y - 1].activate();
-                gameController.updateOther(grids[type, x - 1, y - 1]);
+                revealSquare(playerType, x - 1, y - 1);
             }
             if (y < height - 1)
             {
-                grids[type, x - 1, y + 1].activate();
-                gameController.updateOther(grids[type, x - 1, y + 1]);
+                revealSquare(playerType, x - 1, y + 1);
             }
         }
 
         if (x < length - 1)
         {
-            grids[type, x + 1, y].activate();
-            gameController.updateOther(grids[type, x + 1, y]);
+            revealSquare(playerType, x + 1, y);
             if (y > 0)
             {
-                grids[type, x + 1, y - 1].activate();
-                gameController.updateOther(grids[type, x + 1, y - 1]);
+                revealSquare(playerType, x + 1, y - 1);
             }
             if (y < height - 1)
             {
-                grids[type, x + 1, y + 1].activate();
-                gameController.updateOther(grids[type, x + 1, y + 1]);
+                revealSquare(playerType, x + 1, y + 1);
             }
         }
+    }
+
+    public void revealSquare(Type playerType, int x, int y)
+    {
+        int type = (int)playerType;
+        grids[type, x, y].activate();
+        gameController.updateOther(grids[type, x, y]);
     }
     
     public void unhightlightGrid(Type playerType)

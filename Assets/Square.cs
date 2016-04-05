@@ -14,7 +14,14 @@ public class Square : MonoBehaviour {
         Fading,
         FadingInactive,
         IceHighlight,
-        EmptyHighlight
+        EmptyHighlight,
+    }
+
+    public enum TileColor
+    {
+        Red,
+        Blue,
+        Neutral
     }
 
     public bool iced
@@ -59,22 +66,25 @@ public class Square : MonoBehaviour {
 
     public GameObject iceSprite;
     public GameObject dirtSprite;
-    public GameObject iceInactiveSprite;
-    public GameObject dirtInactiveSprite;
-
-    public GameObject dirtHighlightSprite;
-    public GameObject iceHighlightSprite;
-
-    public GameObject[] dirtFadeSprites;
-    public GameObject[] dirtFadeInactiveSprites;
+    public GameObject blackSprite;
+    public GameObject whiteSprite;
+    public GameObject[] explosionSprite;
+    public GameObject redLayer;
+    public GameObject blueLayer;
 
     public Animator flame;
 
     public State state;
+    public TileColor color;
     private int fadeNum;
 
     public int xIndex;
     public int yIndex;
+
+    void Awake()
+    {
+        
+    }
 
     // Use this for initialization
     void Start()
@@ -114,22 +124,34 @@ public class Square : MonoBehaviour {
         }
     }
 
+    public void setColor(TileColor _color)
+    {
+        blueLayer.SetActive(false);
+        redLayer.SetActive(false);
+        color = _color;
+        switch(color)
+        {
+            case TileColor.Blue:
+                blueLayer.SetActive(true);
+                break;
+            case TileColor.Red:
+                redLayer.SetActive(true);
+                break;
+            case TileColor.Neutral:
+                break;
+        }
+    }
+
     public void setState(State _state)
     {
         iceSprite.SetActive(false);
         dirtSprite.SetActive(false);
-        iceInactiveSprite.SetActive(false);
-        dirtInactiveSprite.SetActive(false);
-        for (int i = 0; i < dirtFadeSprites.Length; i++)
+        blackSprite.SetActive(false);
+        whiteSprite.SetActive(false);
+        for (int i = 0; i < explosionSprite.Length; i++)
         {
-            dirtFadeSprites[i].SetActive(false);
+            explosionSprite[i].SetActive(false);
         }
-        for (int i = 0; i < dirtFadeInactiveSprites.Length; i++)
-        {
-            dirtFadeInactiveSprites[i].SetActive(false);
-        }
-        dirtHighlightSprite.SetActive(false);
-        iceHighlightSprite.SetActive(false);
         switch (_state)
         {
             case State.Empty:
@@ -144,27 +166,34 @@ public class Square : MonoBehaviour {
                 break;
             case State.EmptyInactive:
                 state = State.EmptyInactive;
-                dirtInactiveSprite.SetActive(true);
+                dirtSprite.SetActive(true);
+                blackSprite.SetActive(true);
                 break;
             case State.IceInactive:
                 state = State.IceInactive;
-                iceInactiveSprite.SetActive(true);
+                iceSprite.SetActive(true);
+                blackSprite.SetActive(true);
                 break;
             case State.Fading:
                 state = State.Fading;
-                dirtFadeSprites[fadeNum].SetActive(true);
+                dirtSprite.SetActive(true);
+                explosionSprite[fadeNum].SetActive(true);
                 break;
             case State.FadingInactive:
                 state = State.FadingInactive;
-                dirtFadeInactiveSprites[fadeNum].SetActive(true);
+                dirtSprite.SetActive(true);
+                explosionSprite[fadeNum].SetActive(true);
+                blackSprite.SetActive(true);
                 break;
             case State.EmptyHighlight:
                 state = State.EmptyHighlight;
-                dirtHighlightSprite.SetActive(true);
+                dirtSprite.SetActive(true);
+                whiteSprite.SetActive(true);
                 break;
             case State.IceHighlight:
                 state = State.IceHighlight;
-                iceHighlightSprite.SetActive(true);
+                iceSprite.SetActive(true);
+                whiteSprite.SetActive(true);
                 break;
         }
     }
@@ -204,7 +233,7 @@ public class Square : MonoBehaviour {
         if (state.Equals(State.Fading))
         {
             fadeNum++;
-            if (fadeNum >= dirtFadeSprites.Length)
+            if (fadeNum >= explosionSprite.Length)
             {
                 setState(State.Empty);
                 fadeNum = 0;
@@ -217,7 +246,7 @@ public class Square : MonoBehaviour {
         else if (state.Equals(State.FadingInactive))
         {
             fadeNum++;
-            if (fadeNum >= dirtFadeInactiveSprites.Length)
+            if (fadeNum >= explosionSprite.Length)
             {
                 setState(State.EmptyInactive);
                 fadeNum = 0;
