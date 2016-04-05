@@ -143,7 +143,6 @@ public class GameController : Singleton<GameController> {
                 //Waiting for other player to attack;
                 waitScreen.SetActive(true);
                 grid.deactivate(Grid.Type.Other);
-                grid.fade(Grid.Type.Other);
                 playerAttack = true;
                 state = State.OtherAttack;
                 break;
@@ -274,6 +273,7 @@ public class GameController : Singleton<GameController> {
             {
                 playerAttack = true;
                 photonView.RPC("getAttacked", networkController.otherPlayer, square.xIndex, square.yIndex);
+                eventManager.addEvent(() => grid.fade(Grid.Type.Other), 0.9f, true);
                 eventManager.addEvent(() => grid.attack(Grid.Type.Other, square.xIndex, square.yIndex), 1, true);
                 eventManager.addEvent(() => gotoState(State.OtherAttack), 2, true);
             }
