@@ -110,6 +110,14 @@ public class Grid : Singleton<Grid> {
         }
     }
 
+    public void showBoth()
+    {
+        playerGridsObjects[0].transform.position = new Vector3(0, 2.75f, 0);
+        playerGridsObjects[1].transform.position = new Vector3(0, -2.75f, 0);
+        playerGridsObjects[0].transform.localScale = new Vector3(0.45f, 0.45f, 0.45f);
+        playerGridsObjects[1].transform.localScale = new Vector3(0.45f, 0.45f, 0.45f);
+    }
+
     public void hide(GameObject grid)
     {
         grid.transform.position = new Vector3(0, 0, 1);
@@ -457,6 +465,17 @@ public class Grid : Singleton<Grid> {
         grids[type, x, y].activate();
         gameController.updateOther(grids[type, x, y]);
     }
+
+    public void revealGrid(Type playerType)
+    {
+        for (int i = 0; i < length; i++)
+        {
+            for (int j = 0; j < height; j++)
+            {
+                revealSquare(playerType, i, j);
+            }
+        }
+    }
     
     public void unhightlightGrid(Type playerType)
     {
@@ -687,25 +706,5 @@ public class Grid : Singleton<Grid> {
             return currentChain;
         }
     }
-
-    //Old methods, need refactor
-    /*
     
-    public void refreshOther(int player)
-    {
-        int other = (player + 1) % 2;
-        for (int i = 0; i < length; i++)
-        {
-            for (int j = 0; j < height; j++)
-            {
-                if (grids[type,player, i, j].active)
-                {
-                    grids[type,player, i, j].setState(grids[type,other, i, j].state);
-                }
-            }
-        }
-    }
-
-
-    */
 }

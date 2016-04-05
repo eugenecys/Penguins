@@ -334,6 +334,8 @@ public class GameController : Singleton<GameController> {
         otherReady = false;
         photonView.RPC("loseGame", networkController.otherPlayer);
         gameUIController.showWin();
+        grid.revealGrid(Grid.Type.Other);
+        grid.showBoth();
     }
 
     [PunRPC]
@@ -343,13 +345,15 @@ public class GameController : Singleton<GameController> {
         playerReady = false;
         otherReady = false;
         gameUIController.showLose();
+        grid.revealGrid(Grid.Type.Other);
+        grid.showBoth();
     }
 
     void beginRound()
     {
         gotoState(State.Ice);
     }
-
+    
     public void replay()
     {
         gameUIController.hideAll();
